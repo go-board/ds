@@ -71,15 +71,9 @@ func (e Entry[K, V]) Get() (V, bool) {
 	return existingEntry.Value, true
 }
 
-// Insert inserts a value and returns a reference to it, regardless of whether the key exists
-func (e Entry[K, V]) Insert(value V) *V {
-	// Directly insert or update the value
-	e.mapRef.Insert(e.key, value)
-
-	// Directly use Search to find and return the reference
-	targetEntry := &node[K, V]{Key: e.key}
-	existingEntry, _ := e.mapRef.btree.Search(targetEntry)
-	return &existingEntry.Value
+// Insert inserts or updates the value and returns the old value if one existed.
+func (e Entry[K, V]) Insert(value V) (V, bool) {
+	return e.mapRef.insert(e.key, value)
 }
 
 // OrInsertWithKey creates a value through a key-related function and inserts it if the key doesn't exist, returns a reference to the value; if the key exists, returns a reference to the existing value
@@ -109,6 +103,12 @@ func (e Entry[K, V]) AndModify(modifyFn func(*V)) Entry[K, V] {
 		modifyFn(&e.node.Value)
 	}
 	return e
+}
+
+// Delete removes the key and reports whether it existed.
+func (e Entry[K, V]) Delete() bool {
+	_, ok := e.mapRef.Remove(e.key)
+	return ok
 }
 
 // GetKey retrieves the key of the Entry

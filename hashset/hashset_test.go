@@ -204,3 +204,28 @@ func TestHashSetIsDisjointAllBranches(t *testing.T) {
 		t.Error("Two empty sets should be disjoint")
 	}
 }
+
+func TestHashSetEqual(t *testing.T) {
+	a := New[int](newIntHasher())
+	b := New[int](newIntHasher())
+	for _, v := range []int{1, 2, 3} {
+		a.Insert(v)
+		b.Insert(v)
+	}
+	if !a.Equal(b) {
+		t.Fatal("sets with same elements should be equal")
+	}
+
+	b.Insert(4)
+	if a.Equal(b) {
+		t.Fatal("sets with different lengths should not be equal")
+	}
+
+	c := New[int](newIntHasher())
+	for _, v := range []int{1, 2, 4} {
+		c.Insert(v)
+	}
+	if a.Equal(c) {
+		t.Fatal("sets with same length but different elements should not be equal")
+	}
+}

@@ -21,7 +21,7 @@
 //	fmt.Println(exists) // true
 //
 //	// Iterate through all elements (in order)
-//	for val := range s.Iter() {
+//	for val := range s.IterAsc() {
 //		fmt.Println(val)
 //	}
 package skipset
@@ -133,24 +133,6 @@ func (ss *SkipSet[E]) Clone() *SkipSet[E] {
 	return clone
 }
 
-// Extend adds another iterable collection of elements to the current set.
-// Parameters:
-//   - iter: Iterator providing elements
-//
-// Behavior:
-//   - For each element, it is only added if it is not already in the current set
-
-// Iter returns an iterator for all elements in the set, sorted in ascending order of elements.
-// Returns:
-//   - Element iterator of type [iter.Seq]
-// Range returns an iterator for elements in the set that fall within the [lowerBound, upperBound) range.
-// Parameters:
-//   - lowerBound: Lower bound of the range (inclusive), nil for no lower bound
-//   - upperBound: Upper bound of the range (exclusive), nil for no upper bound
-//
-// Returns:
-//   - Iterator for elements in the specified range, sorted in ascending order
-
 // First returns the first (smallest) element in the set.
 // Returns:
 //   - The element and true if the set is not empty
@@ -198,7 +180,7 @@ func (ss *SkipSet[E]) Union(other *SkipSet[E]) *SkipSet[E] {
 	result := ss.Clone()
 
 	// Add all elements from the other set
-	for key := range other.Iter() {
+	for key := range other.IterAsc() {
 		result.Insert(key)
 	}
 
@@ -224,7 +206,7 @@ func (ss *SkipSet[E]) Intersection(other *SkipSet[E]) *SkipSet[E] {
 	}
 
 	// Check if each element in the smaller set exists in the larger set
-	for key := range small.Iter() {
+	for key := range small.IterAsc() {
 		if large.Contains(key) {
 			result.Insert(key)
 		}
@@ -244,7 +226,7 @@ func (ss *SkipSet[E]) Difference(other *SkipSet[E]) *SkipSet[E] {
 	result := New(ss.mapImpl.GetComparator())
 
 	// Check if each element in the current set is not in the other set
-	for key := range ss.Iter() {
+	for key := range ss.IterAsc() {
 		if !other.Contains(key) {
 			result.Insert(key)
 		}
@@ -265,7 +247,7 @@ func (ss *SkipSet[E]) SymmetricDifference(other *SkipSet[E]) *SkipSet[E] {
 	diff2 := other.Difference(ss)
 
 	// Return the union of both differences
-	for key := range diff2.Iter() {
+	for key := range diff2.IterAsc() {
 		diff1.Insert(key)
 	}
 
@@ -286,7 +268,7 @@ func (ss *SkipSet[E]) IsSubset(other *SkipSet[E]) bool {
 	}
 
 	// Check if each element in the current set is in the other set
-	for key := range ss.Iter() {
+	for key := range ss.IterAsc() {
 		if !other.Contains(key) {
 			return false
 		}
@@ -324,7 +306,7 @@ func (ss *SkipSet[E]) IsDisjoint(other *SkipSet[E]) bool {
 	}
 
 	// Check if each element in the smaller set exists in the larger set
-	for key := range small.Iter() {
+	for key := range small.IterAsc() {
 		if large.Contains(key) {
 			return false
 		}

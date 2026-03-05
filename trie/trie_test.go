@@ -4,9 +4,8 @@ import (
 	"testing"
 )
 
+// TestTrieMapBasicOperations validates core insert/get/remove flows.
 func TestTrieMapBasicOperations(t *testing.T) {
-	// 创建一个新的TrieMap，使用字符串作为键的元素类型，字符串作为值类型
-	// 使用正确的comparator函数而不是nil
 	tm := New[string, string](func(a, b string) int {
 		if a < b {
 			return -1
@@ -16,28 +15,24 @@ func TestTrieMapBasicOperations(t *testing.T) {
 		return 0
 	})
 
-	// 测试插入
 	keys := [][]string{
-		{"a"},           // 键是单元素切片 ["a"]
-		{"a", "b"},      // 键是双元素切片 ["a", "b"]
-		{"a", "b", "c"}, // 键是三元素切片 ["a", "b", "c"]
-		{"a", "d"},      // 键是双元素切片 ["a", "d"]
-		{"e"},           // 键是单元素切片 ["e"]
-		{"e", "f"},      // 键是双元素切片 ["e", "f"]
+		{"a"},
+		{"a", "b"},
+		{"a", "b", "c"},
+		{"a", "d"},
+		{"e"},
+		{"e", "f"},
 	}
 	values := []string{"a", "ab", "abc", "ad", "e", "ef"}
 
-	// 插入键值对
 	for i, key := range keys {
 		tm.Insert(key, values[i])
 	}
 
-	// 验证插入后的大小
 	if tm.Len() != len(keys) {
 		t.Errorf("Len: expected %d, got %d", len(keys), tm.Len())
 	}
 
-	// 测试获取
 	for i, key := range keys {
 		value, exists := tm.Get(key)
 		if !exists {
@@ -49,15 +44,12 @@ func TestTrieMapBasicOperations(t *testing.T) {
 		}
 	}
 
-	// 测试不存在的键
 	_, exists := tm.Get([]string{"nonexistent"})
 	if exists {
 		t.Errorf("Get: expected key [nonexistent] to not exist")
 	}
 
-	// 测试删除
 	for i, key := range keys {
-		// 删除键并验证
 		value, deleted := tm.Remove(key)
 		if !deleted {
 			t.Errorf("Remove: expected key %v to be deleted", key)
@@ -65,22 +57,19 @@ func TestTrieMapBasicOperations(t *testing.T) {
 			t.Errorf("Remove: expected value %s for key %v, got %s", values[i], key, value)
 		}
 
-		// 验证键已删除
 		_, exists := tm.Get(key)
 		if exists {
 			t.Errorf("Get: expected key %v to be deleted", key)
 		}
 
-		// 验证大小减少
 		if tm.Len() != len(keys)-i-1 {
 			t.Errorf("Len after delete: expected %d, got %d", len(keys)-i-1, tm.Len())
 		}
 	}
 }
 
+// TestTrieMapPrefixMatching validates prefix-based key and value lookups.
 func TestTrieMapPrefixMatching(t *testing.T) {
-	// 创建一个新的TrieMap，使用字符串作为键的元素类型，字符串作为值类型
-	// 使用正确的comparator函数而不是nil
 	tm := New[string, string](func(a, b string) int {
 		if a < b {
 			return -1
@@ -90,7 +79,6 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 		return 0
 	})
 
-	// 插入一些键值对
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
 	tm.Insert([]string{"a", "b", "c"}, "abc")
@@ -98,16 +86,13 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 	tm.Insert([]string{"e"}, "e")
 	tm.Insert([]string{"e", "f"}, "ef")
 
-	// 测试ValuesByPrefix
-
-	// 测试ValuesByPrefix
+	// Query values for a broad prefix and compare as a set.
 	valuesA := tm.ValuesByPrefix([]string{"a"})
 	valuesASlice := collectSeq(valuesA)
 	expectedValuesA := []string{"a", "ab", "abc", "ad"}
 	if len(valuesASlice) != len(expectedValuesA) {
 		t.Errorf("ValuesByPrefix [a]: expected %d values, got %d", len(expectedValuesA), len(valuesASlice))
 	} else {
-		// 验证所有期望的值都在结果中（不考虑顺序，因为我们在测试中没有实现排序的验证）
 		valueMap := make(map[string]bool)
 		for _, v := range valuesASlice {
 			valueMap[v] = true
@@ -119,7 +104,7 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 		}
 	}
 
-	// 测试KeysByPrefix
+	// Query keys for a narrower prefix and compare as a set.
 	keysAB := tm.KeysByPrefix([]string{"a", "b"})
 	keysABSlice := collectSeq2D(keysAB)
 	expectedKeysAB := [][]string{
@@ -129,10 +114,8 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 	if len(keysABSlice) != len(expectedKeysAB) {
 		t.Errorf("KeysByPrefix [a b]: expected %d keys, got %d", len(expectedKeysAB), len(keysABSlice))
 	} else {
-		// 简单验证结果
 		keyMap := make(map[string]bool)
 		for _, key := range keysABSlice {
-			// 将键转换为字符串以便比较
 			keyStr := ""
 			for _, k := range key {
 				keyStr += k
@@ -151,7 +134,7 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 		}
 	}
 
-	// 测试不存在的前缀
+	// Non-existent prefixes should produce empty iterators.
 	valuesNonexistent := tm.ValuesByPrefix([]string{"nonexistent"})
 	valuesNonexistentSlice := collectSeq(valuesNonexistent)
 	if len(valuesNonexistentSlice) > 0 {
@@ -165,9 +148,8 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 	}
 }
 
+// TestTrieMapIterators verifies full-map, prefix, and mutable iterator behavior.
 func TestTrieMapIterators(t *testing.T) {
-	// 创建一个新的TrieMap，使用字符串作为键的元素类型，字符串作为值类型
-	// 使用正确的comparator函数而不是nil
 	tm := New[string, string](func(a, b string) int {
 		if a < b {
 			return -1
@@ -177,7 +159,6 @@ func TestTrieMapIterators(t *testing.T) {
 		return 0
 	})
 
-	// 插入一些键值对
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
 	tm.Insert([]string{"a", "b", "c"}, "abc")
@@ -185,21 +166,18 @@ func TestTrieMapIterators(t *testing.T) {
 	tm.Insert([]string{"e"}, "e")
 	tm.Insert([]string{"e", "f"}, "ef")
 
-	// 测试Keys
 	keys := tm.Keys()
 	keysSlice := collectSeq2D(keys)
 	if len(keysSlice) != tm.Len() {
 		t.Errorf("Keys: expected %d keys, got %d", tm.Len(), len(keysSlice))
 	}
 
-	// 测试Values
 	values := tm.Values()
 	valuesSlice := collectSeq(values)
 	if len(valuesSlice) != tm.Len() {
 		t.Errorf("Values: expected %d values, got %d", tm.Len(), len(valuesSlice))
 	}
 
-	// 测试Iter
 	keyValues := make(map[string]string)
 	for key, value := range tm.Iter() {
 		keyStr := ""
@@ -209,7 +187,6 @@ func TestTrieMapIterators(t *testing.T) {
 		keyValues[keyStr] = value
 	}
 
-	// 验证所有键值对都被迭代到
 	expectedKeyValues := map[string]string{
 		"a":   "a",
 		"ab":  "ab",
@@ -229,7 +206,6 @@ func TestTrieMapIterators(t *testing.T) {
 		}
 	}
 
-	// 测试IterByPrefix
 	prefix := []string{"a"}
 	prefixKeyValues := make(map[string]string)
 	for key, value := range tm.IterByPrefix(prefix) {
@@ -240,7 +216,6 @@ func TestTrieMapIterators(t *testing.T) {
 		prefixKeyValues[keyStr] = value
 	}
 
-	// 验证所有具有指定前缀的键值对都被迭代到
 	expectedPrefixKeyValues := map[string]string{
 		"a":   "a",
 		"ab":  "ab",
@@ -258,15 +233,11 @@ func TestTrieMapIterators(t *testing.T) {
 		}
 	}
 
-	// 测试IterMut
-	// 为所有值添加后缀
 	for _, valuePtr := range tm.IterMut() {
 		*valuePtr += "_mutated"
 	}
 
-	// 验证所有值都被修改
 	for keyStr, expectedValue := range expectedKeyValues {
-		// 将字符串键转回切片形式
 		keySlice := make([]string, 0, len(keyStr))
 		for i := 0; i < len(keyStr); i++ {
 			keySlice = append(keySlice, string(keyStr[i]))
@@ -285,9 +256,8 @@ func TestTrieMapIterators(t *testing.T) {
 	}
 }
 
+// TestTrieMapDelete covers leaf, internal, and missing-key delete paths.
 func TestTrieMapDelete(t *testing.T) {
-	// 创建一个新的TrieMap，使用字符串作为键的元素类型，字符串作为值类型
-	// 使用正确的comparator函数而不是nil
 	tm := New[string, string](func(a, b string) int {
 		if a < b {
 			return -1
@@ -297,70 +267,59 @@ func TestTrieMapDelete(t *testing.T) {
 		return 0
 	})
 
-	// 插入一些键值对
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
 	tm.Insert([]string{"a", "b", "c"}, "abc")
 	tm.Insert([]string{"a", "d"}, "ad")
 
-	// 测试删除叶子节点
 	_, deleted := tm.Remove([]string{"a", "b", "c"})
 	if !deleted {
 		t.Errorf("Remove: expected to delete leaf node [a b c]")
 	}
 
-	// 验证节点已被删除
 	_, exists := tm.Get([]string{"a", "b", "c"})
 	if exists {
 		t.Errorf("Delete: leaf node [a b c] still exists after deletion")
 	}
 
-	// 验证父节点仍然存在
 	_, exists = tm.Get([]string{"a", "b"})
 	if !exists {
 		t.Errorf("Delete: parent node [a b] no longer exists after deleting leaf")
 	}
 
-	// 测试删除中间节点（有子节点）
 	_, deleted = tm.Remove([]string{"a", "b"})
 	if !deleted {
 		t.Errorf("Remove: expected to delete intermediate node [a b]")
 	}
 
-	// 验证节点已被删除
 	_, exists = tm.Get([]string{"a", "b"})
 	if exists {
 		t.Errorf("Delete: intermediate node [a b] still exists after deletion")
 	}
 
-	// 测试删除根节点的直接子节点
 	_, deleted = tm.Remove([]string{"a"})
 	if !deleted {
 		t.Errorf("Remove: expected to delete root child node [a]")
 	}
 
-	// 验证节点已被删除
 	_, exists = tm.Get([]string{"a"})
 	if exists {
 		t.Errorf("Delete: root child node [a] still exists after deletion")
 	}
 
-	// 验证其他键仍然存在
 	_, exists = tm.Get([]string{"a", "d"})
 	if !exists {
 		t.Errorf("Delete: node [a d] no longer exists after deleting [a]")
 	}
 
-	// 测试删除不存在的键
 	_, deleted = tm.Remove([]string{"nonexistent"})
 	if deleted {
 		t.Errorf("Remove: expected to return false for nonexistent key")
 	}
 }
 
+// TestTrieMapClone verifies clone completeness and deep-copy semantics.
 func TestTrieMapClone(t *testing.T) {
-	// 创建一个新的TrieMap，使用字符串作为键的元素类型，字符串作为值类型
-	// 使用正确的comparator函数而不是nil
 	tm := New[string, string](func(a, b string) int {
 		if a < b {
 			return -1
@@ -370,21 +329,17 @@ func TestTrieMapClone(t *testing.T) {
 		return 0
 	})
 
-	// 插入一些键值对
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
 	tm.Insert([]string{"a", "b", "c"}, "abc")
 	tm.Insert([]string{"a", "d"}, "ad")
 
-	// 克隆TrieMap
 	clone := tm.Clone()
 
-	// 验证克隆的大小与原TrieMap相同
 	if clone.Len() != tm.Len() {
 		t.Errorf("Clone: expected len %d, got %d", tm.Len(), clone.Len())
 	}
 
-	// 验证克隆包含所有键值对
 	for key, expectedValue := range tm.Iter() {
 		value, exists := clone.Get(key)
 		if !exists {
@@ -396,29 +351,24 @@ func TestTrieMapClone(t *testing.T) {
 		}
 	}
 
-	// 验证克隆是深拷贝
-	// 修改克隆中的值
 	clone.Insert([]string{"a"}, "modified_a")
 	clone.Insert([]string{"new"}, "new_value")
 
-	// 验证原TrieMap未被修改
 	value, exists := tm.Get([]string{"a"})
 	if !exists || value != "a" {
 		t.Errorf("Clone: original TrieMap was modified, expected value 'a', got '%v'", value)
 	}
 
-	// 验证原TrieMap不包含新插入的键
 	_, exists = tm.Get([]string{"new"})
 	if exists {
 		t.Errorf("Clone: original TrieMap contains new key inserted in clone")
 	}
 }
 
-// 辅助函数：将iter.Seq[[]K]转换为[][]K切片
+// collectSeq2D drains a [][]K iterator into a slice for assertions.
 func collectSeq2D[K any](seq func(func([]K) bool)) [][]K {
 	result := make([][]K, 0)
 	seq(func(k []K) bool {
-		// 创建键的副本
 		keyCopy := make([]K, len(k))
 		copy(keyCopy, k)
 		result = append(result, keyCopy)
@@ -427,7 +377,7 @@ func collectSeq2D[K any](seq func(func([]K) bool)) [][]K {
 	return result
 }
 
-// 辅助函数：将iter.Seq[V]转换为[]V切片
+// collectSeq drains a value iterator into a slice for assertions.
 func collectSeq[V any](seq func(func(V) bool)) []V {
 	result := make([]V, 0)
 	seq(func(v V) bool {
@@ -439,7 +389,6 @@ func collectSeq[V any](seq func(func(V) bool)) []V {
 
 // TestTrieMapEntryAPI tests the Entry API of TrieMap
 func TestTrieMapEntryAPI(t *testing.T) {
-	// 创建一个新的TrieMap，使用字符串作为键的元素类型，字符串作为值类型
 	tm := New[string, string](func(a, b string) int {
 		if a < b {
 			return -1
@@ -449,79 +398,66 @@ func TestTrieMapEntryAPI(t *testing.T) {
 		return 0
 	})
 
-	// 测试Entry.Get方法 - 键不存在的情况
 	entry := tm.Entry([]string{"a"})
 	val, found := entry.Get()
 	if found || val != "" {
 		t.Errorf("Entry.Get: expected not found and empty value for nonexistent key, got found=%v, val=%s", found, val)
 	}
 
-	// 测试Entry.OrInsert方法 - 插入新值
 	valPtr := entry.OrInsert("value_a")
 	if *valPtr != "value_a" {
 		t.Errorf("Entry.OrInsert: expected value 'value_a', got '%s'", *valPtr)
 	}
 
-	// 验证值已被正确插入
 	actualVal, found := tm.Get([]string{"a"})
 	if !found || actualVal != "value_a" {
 		t.Errorf("Entry.OrInsert: expected to insert value, got found=%v, val=%s", found, actualVal)
 	}
 
-	// 测试Entry.OrInsert方法 - 键已存在
 	valPtr = entry.OrInsert("new_value_a")
 	if *valPtr != "value_a" {
 		t.Errorf("Entry.OrInsert: expected to not override existing value, got '%s'", *valPtr)
 	}
 
-	// 测试Entry.AndModify方法
 	entry.AndModify(func(v *string) {
 		*v = "modified_value_a"
 	})
 
-	// 验证值已被修改
 	actualVal, found = tm.Get([]string{"a"})
 	if !found || actualVal != "modified_value_a" {
 		t.Errorf("Entry.AndModify: expected modified value, got found=%v, val=%s", found, actualVal)
 	}
 
-	// 测试Entry.AndModify链式调用
 	entry.AndModify(func(v *string) {
 		*v += "_extra"
 	}).OrInsert("ignored_value")
 
-	// 验证链式调用的结果
 	actualVal, found = tm.Get([]string{"a"})
 	if !found || actualVal != "modified_value_a_extra" {
 		t.Errorf("Entry.AndModify chain: expected chained result, got found=%v, val=%s", found, actualVal)
 	}
 
-	// 测试Entry.Insert方法 - 更新现有键
 	oldVal, found := entry.Insert("updated_value_a")
 	if !found || oldVal != "modified_value_a_extra" {
 		t.Errorf("Entry.Insert: expected old value, got found=%v, oldVal=%s", found, oldVal)
 	}
 
-	// 验证值已被更新
 	actualVal, found = tm.Get([]string{"a"})
 	if !found || actualVal != "updated_value_a" {
 		t.Errorf("Entry.Insert: expected updated value, got found=%v, val=%s", found, actualVal)
 	}
 
-	// 测试Entry.Insert方法 - 插入新键
 	newEntry := tm.Entry([]string{"b"})
 	oldVal, found = newEntry.Insert("value_b")
 	if found || oldVal != "" {
 		t.Errorf("Entry.Insert: expected not found and empty old value for new key, got found=%v, oldVal=%s", found, oldVal)
 	}
 
-	// 验证新值已被插入
 	actualVal, found = tm.Get([]string{"b"})
 	if !found || actualVal != "value_b" {
 		t.Errorf("Entry.Insert: expected to insert new value, got found=%v, val=%s", found, actualVal)
 	}
 
-	// 测试Entry.OrInsertWith方法
 	funcEntry := tm.Entry([]string{"c"})
 	valPtr = funcEntry.OrInsertWith(func() string {
 		return "value_c"
@@ -530,7 +466,6 @@ func TestTrieMapEntryAPI(t *testing.T) {
 		t.Errorf("Entry.OrInsertWith: expected value 'value_c', got '%s'", *valPtr)
 	}
 
-	// 测试Entry.OrInsertWithKey方法
 	keyFuncEntry := tm.Entry([]string{"d"})
 	valPtr = keyFuncEntry.OrInsertWithKey(func(key []string) string {
 		return "value_" + key[0]
@@ -539,32 +474,27 @@ func TestTrieMapEntryAPI(t *testing.T) {
 		t.Errorf("Entry.OrInsertWithKey: expected value 'value_d', got '%s'", *valPtr)
 	}
 
-	// 测试Entry.Delete方法
 	deleted := entry.Delete()
 	if !deleted {
 		t.Errorf("Entry.Delete: expected to delete existing key")
 	}
 
-	// 验证键已被删除
 	_, found = tm.Get([]string{"a"})
 	if found {
 		t.Errorf("Entry.Delete: key still exists after deletion")
 	}
 
-	// 测试Entry.Delete方法 - 键不存在
 	deleted = entry.Delete()
 	if deleted {
 		t.Errorf("Entry.Delete: expected not to delete nonexistent key")
 	}
 
-	// 测试Entry.Delete方法的另一个用例
 	bEntry := tm.Entry([]string{"b"})
 	deleted = bEntry.Delete()
 	if !deleted {
 		t.Errorf("Entry.Delete: expected to delete existing key")
 	}
 
-	// 验证键已被删除
 	_, found = tm.Get([]string{"b"})
 	if found {
 		t.Errorf("Entry.Delete: key still exists after deletion")

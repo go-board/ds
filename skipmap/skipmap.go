@@ -22,7 +22,7 @@
 //	}
 //
 //	// Iterate over all key-value pairs (sorted by key)
-//	for k, v := range m.Iter() {
+//	for k, v := range m.IterAsc() {
 //		fmt.Printf("%s: %d\n", k, v)
 //	}
 package skipmap
@@ -168,36 +168,28 @@ func randomLevel() int {
 //   - If the key existed, returns the old value and true
 //   - If the key did not exist, returns the zero value and false
 func (sm *SkipMap[K, V]) Insert(key K, value V) (V, bool) {
-	// Used to track nodes that need updates at each level
+	return sm.Entry(key).Insert(value)
+}
+
+func (sm *SkipMap[K, V]) insert(key K, value V) (V, bool) {
 	update := make([]*node[K, V], maxLevel+1)
 	current := sm.head
 
-	// Start searching from the highest level
 	for i := sm.level; i >= 0; i-- {
-		// Move forward along the current level until finding a node >= key or reaching end
 		for current.next[i] != nil && sm.comparator(current.next[i].Key, key) < 0 {
 			current = current.next[i]
 		}
 		update[i] = current
 	}
 
-	// Reached level 0, current.next[0] is the first node >= key
 	current = current.next[0]
-
-	// If the same key is found, update the value and return the old value
-	var oldValue V
-	var updated bool
 	if current != nil && sm.comparator(current.Key, key) == 0 {
-		oldValue = current.Value
+		oldValue := current.Value
 		current.Value = value
-		updated = true
-		return oldValue, updated
+		return oldValue, true
 	}
 
-	// Generate level for new node
 	newLevel := randomLevel()
-
-	// If new node's level is higher than current max level, update max level and update array
 	if newLevel > sm.level {
 		for i := sm.level + 1; i <= newLevel; i++ {
 			update[i] = sm.head
@@ -205,19 +197,15 @@ func (sm *SkipMap[K, V]) Insert(key K, value V) (V, bool) {
 		sm.level = newLevel
 	}
 
-	// Create new node
-	newNode := newNode(key, value, newLevel)
-
-	// Insert new node at each level
+	n := newNode(key, value, newLevel)
 	for i := 0; i <= newLevel; i++ {
-		newNode.next[i] = update[i].next[i]
-		update[i].next[i] = newNode
+		n.next[i] = update[i].next[i]
+		update[i].next[i] = n
 	}
 
-	// Increase element count
 	sm.length++
-
-	return oldValue, updated
+	var zero V
+	return zero, false
 }
 
 // Get retrieves the value associated with the specified key.
@@ -455,23 +443,12 @@ func (sm *SkipMap[K, V]) Clone() *SkipMap[K, V] {
 	clone := New[K, V](sm.comparator)
 
 	// Copy all key-value pairs (through iteration)
-	for k, v := range sm.Iter() {
+	for k, v := range sm.IterAsc() {
 		clone.Insert(k, v)
 	}
 
 	return clone
 }
-
-// Extend adds another iterable collection of key-value pairs to the current map.
-// Parameters:
-//   - iter: An iterator providing key-value pairs
-//
-// Behavior:
-//   - For each key-value pair, updates the value if the key already exists, otherwise adds a new key-value pair
-
-// iterator-related methods have been moved to `iter.go`
-
-// iterator-related methods have been moved to `iter.go`
 
 // First returns the first (smallest) key-value pair in the map.
 // Returns:

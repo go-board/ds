@@ -4,33 +4,15 @@ package ds
 
 import (
 	"iter"
+
+	"github.com/go-board/ds/bound"
 )
 
-// Map defines a common interface for key-value mappings.
-// All types implementing this interface provide key-to-value mapping functionality,
-// supporting basic operations like addition, deletion, modification, and lookup, as well as iteration.
+// Map defines the common interface for key-value mappings.
 //
 // Type parameters:
 //   - K: Key type
 //   - V: Value type
-//
-// Example:
-//
-//	// Using a concrete type that implements the Map interface
-//	var m ds.Map[string, int]
-//	m = hashmap.NewHashMap[string, int](hashutil.StrHasher{})
-//
-//	// Using interface methods
-//	m.Insert("apple", 5)
-//	val, found := m.Get("apple")
-//	if found {
-//	    fmt.Println(val) // Output: 5
-//	}
-//
-//	// Iterating over the map
-//	for k, v := range m.Iter() {
-//	    fmt.Printf("%s: %d\n", k, v)
-//	}
 type Map[K any, V any] interface {
 	// Get retrieves the value associated with the specified key.
 	// Parameters:
@@ -178,56 +160,54 @@ type OrderedMap[K any, V any] interface {
 	//   - If the map is empty, returns zero key, zero value, and false
 	PopLast() (K, V, bool)
 
-	// Range returns an iterator over key-value pairs where the key is in the [lowerBound, upperBound) range.
+	// RangeAsc returns key-value pairs in ascending key order within bounds.
 	// Parameters:
-	//   - lowerBound: Lower bound of the range (inclusive), nil means no lower bound
-	//   - upperBound: Upper bound of the range (exclusive), nil means no upper bound
+	//   - bounds: Range boundary object (inclusive/exclusive/unbounded)
 	//
 	// Return value:
-	//   - Iterator over key-value pairs within the specified range, sorted by key in ascending order
-	Range(lowerBound, upperBound *K) iter.Seq2[K, V]
+	//   - Iterator over key-value pairs within the specified range
+	RangeAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, V]
 
-	// RangeMut returns a mutable iterator over key-value pairs where the key is in the [lowerBound, upperBound) range.
+	// RangeMutAsc returns mutable key-value pairs in ascending key order within bounds.
 	// Parameters:
-	//   - lowerBound: Lower bound of the range (inclusive), nil means no lower bound
-	//   - upperBound: Upper bound of the range (exclusive), nil means no upper bound
+	//   - bounds: Range boundary object (inclusive/exclusive/unbounded)
 	//
 	// Return value:
-	//   - Mutable iterator over key-value pairs within the specified range, sorted by key in ascending order
-	RangeMut(lowerBound, upperBound *K) iter.Seq2[K, *V]
+	//   - Mutable iterator over key-value pairs within the specified range
+	RangeMutAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V]
 
-	// IterBack returns an iterator over all key-value pairs in the map in reverse order.
+	// IterDesc returns all key-value pairs in descending key order.
 	// Return value:
 	//   - Iterator over all key-value pairs in reverse order, of type iter.Seq2[K, V]
 	//
 	// Note: For ordered maps, key-value pairs are returned in reverse key order; for unordered maps, the order is uncertain.
-	IterBack() iter.Seq2[K, V]
+	IterDesc() iter.Seq2[K, V]
 
-	// IterBackMut returns a mutable iterator over all key-value pairs in the map in reverse order.
+	// IterMutDesc returns mutable key-value pairs in descending key order.
 	// Return value:
 	//   - Mutable iterator over all key-value pairs in reverse order, of type iter.Seq2[K, *V]
 	//
 	// Note: For ordered maps, key-value pairs are returned in reverse key order; for unordered maps, the order is uncertain.
-	IterBackMut() iter.Seq2[K, *V]
+	IterMutDesc() iter.Seq2[K, *V]
 
-	// KeysBack returns an iterator over all keys in the map in reverse order.
+	// KeysDesc returns all keys in descending order.
 	// Return value:
 	//   - Iterator over keys in reverse order, of type iter.Seq[K]
 	//
 	// Note: For ordered maps, keys are returned in reverse order; for unordered maps, the order is uncertain.
-	KeysBack() iter.Seq[K]
+	KeysDesc() iter.Seq[K]
 
-	// ValuesBack returns an iterator over all values in the map in reverse order.
+	// ValuesDesc returns all values in descending key order.
 	// Return value:
 	//   - Iterator over values in reverse order, of type iter.Seq[V]
 	//
 	// Note: For ordered maps, values are returned in reverse key order; for unordered maps, the order is uncertain.
-	ValuesBack() iter.Seq[V]
+	ValuesDesc() iter.Seq[V]
 
-	// ValuesBackMut returns a mutable iterator over all values in the map in reverse order.
+	// ValuesMutDesc returns mutable values in descending key order.
 	// Return value:
 	//   - Mutable iterator over values in reverse order, of type iter.Seq[*V]
 	//
 	// Note: For ordered maps, values are returned in reverse key order; for unordered maps, the order is uncertain.
-	ValuesBackMut() iter.Seq[*V]
+	ValuesMutDesc() iter.Seq[*V]
 }

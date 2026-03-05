@@ -23,7 +23,7 @@
 //	exists := set.Contains(5) // true
 //
 //	// Iterate through elements (in order)
-//	for val := range set.Iter() {
+//	for val := range set.IterAsc() {
 //	    fmt.Println(val) // Output: 3, 5, 7
 //	}
 //
@@ -180,7 +180,7 @@ func (s *BTreeSet[T]) Clear() {
 // Time complexity: O(n)
 func (s *BTreeSet[T]) Clone() *BTreeSet[T] {
 	newSet := New(s.comparator)
-	for elem := range s.btree.Iter() {
+	for elem := range s.btree.IterAsc() {
 		newSet.btree.Insert(elem)
 	}
 	return newSet
@@ -211,7 +211,7 @@ func (s *BTreeSet[T]) Clone() *BTreeSet[T] {
 // Time complexity: O(n + m), where n and m are the sizes of the two sets
 func (s *BTreeSet[T]) Union(other *BTreeSet[T]) *BTreeSet[T] {
 	result := s.Clone()
-	result.Extend(other.Iter())
+	result.Extend(other.IterAsc())
 	return result
 }
 
@@ -236,7 +236,7 @@ func (s *BTreeSet[T]) Intersection(other *BTreeSet[T]) *BTreeSet[T] {
 		s, other = other, s
 	}
 
-	for e := range s.Iter() {
+	for e := range s.IterAsc() {
 		if other.Contains(e) {
 			result.Insert(e)
 		}
@@ -261,7 +261,7 @@ func (s *BTreeSet[T]) Intersection(other *BTreeSet[T]) *BTreeSet[T] {
 func (s *BTreeSet[T]) Difference(other *BTreeSet[T]) *BTreeSet[T] {
 	result := New(s.comparator)
 
-	for e := range s.Iter() {
+	for e := range s.IterAsc() {
 		if !other.Contains(e) {
 			result.Insert(e)
 		}
@@ -287,14 +287,14 @@ func (s *BTreeSet[T]) SymmetricDifference(other *BTreeSet[T]) *BTreeSet[T] {
 	result := New(s.comparator)
 
 	// Add elements that exist only in the current set
-	for k := range s.Iter() {
+	for k := range s.IterAsc() {
 		if !other.Contains(k) {
 			result.Insert(k)
 		}
 	}
 
 	// Add elements that exist only in the other set
-	for k := range other.Iter() {
+	for k := range other.IterAsc() {
 		if !s.Contains(k) {
 			result.Insert(k)
 		}
@@ -321,7 +321,7 @@ func (s *BTreeSet[T]) IsSubset(other *BTreeSet[T]) bool {
 		return false
 	}
 
-	for e := range s.Iter() {
+	for e := range s.IterAsc() {
 		if !other.Contains(e) {
 			return false
 		}
@@ -366,13 +366,21 @@ func (s *BTreeSet[T]) IsDisjoint(other *BTreeSet[T]) bool {
 		s, other = other, s
 	}
 
-	for e := range s.Iter() {
+	for e := range s.IterAsc() {
 		if other.Contains(e) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// Equal checks whether two sets contain exactly the same elements.
+func (s *BTreeSet[T]) Equal(other *BTreeSet[T]) bool {
+	if s.Len() != other.Len() {
+		return false
+	}
+	return s.IsSubset(other)
 }
 
 // First returns the first (smallest) element in the set.

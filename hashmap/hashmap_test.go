@@ -145,9 +145,9 @@ func TestHashMapEntryAPI(t *testing.T) {
 		t.Fatal("OrInsertWithKey result is unexpected")
 	}
 
-	ptr = hm.Entry(2).Insert(200)
-	if ptr == nil || *ptr != 200 {
-		t.Fatal("Insert should update and return a writable pointer")
+	old, existed := hm.Entry(2).Insert(200)
+	if !existed || old != 20 {
+		t.Fatalf("Insert should return old value for existing key, got old=%d existed=%v", old, existed)
 	}
 
 	entry = hm.Entry(99)
@@ -194,13 +194,13 @@ func TestHashMapEdgeCases(t *testing.T) {
 	}))
 
 	// Covering both new and old branches of Entry.Insert
-	ptr := hm.Entry(4).Insert(400)
-	if ptr == nil || *ptr != 400 {
-		t.Fatal("Entry.Insert should update existing key")
+	old, existed := hm.Entry(4).Insert(400)
+	if !existed || old != 40 {
+		t.Fatalf("Entry.Insert should update existing key and return old value, got old=%d existed=%v", old, existed)
 	}
-	ptr = hm.Entry(6).Insert(600)
-	if ptr == nil || *ptr != 600 {
-		t.Fatal("Entry.Insert should insert new key")
+	old, existed = hm.Entry(6).Insert(600)
+	if existed || old != 0 {
+		t.Fatalf("Entry.Insert should insert new key and return zero/false, got old=%d existed=%v", old, existed)
 	}
 
 	if val := hm.Entry(4).OrInsert(444); *val != 400 {

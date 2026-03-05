@@ -26,26 +26,26 @@ func (e Entry[K, V]) Get() (V, bool) {
 // Returns:
 //   - A pointer to the existing value if the key was present, or the new value if it was inserted
 func (e Entry[K, V]) OrInsert(value V) *V {
-	// 尝试获取现有值
+	// Try to retrieve an existing value first.
 	if _, found := e.m.Get(e.key); found {
-		// 键已存在，返回值的指针
+		// Key exists; return a pointer to the existing value.
 		node, _, _ := e.m.findNode(e.key)
 		if node != nil {
 			return &node.value
 		}
-		// 如果由于某种原因无法获取节点，直接插入并再次尝试
+		// If the node is unexpectedly unavailable, insert and retry.
 	}
 
-	// 插入新值
+	// Insert a new value.
 	e.m.Insert(e.key, value)
 
-	// 获取插入后的节点并返回值的指针
+	// Fetch the inserted node and return a pointer to its value.
 	node, _, _ := e.m.findNode(e.key)
 	if node != nil {
 		return &node.value
 	}
 
-	// 理论上不应该到达这里，但为了安全返回nil
+	// This path should be unreachable; return nil defensively.
 	return nil
 }
 
@@ -58,27 +58,27 @@ func (e Entry[K, V]) OrInsert(value V) *V {
 // Returns:
 //   - A pointer to the existing value if the key was present, or the new value if it was inserted
 func (e Entry[K, V]) OrInsertWith(f func() V) *V {
-	// 尝试获取现有值
+	// Try to retrieve an existing value first.
 	if _, found := e.m.Get(e.key); found {
-		// 键已存在，返回值的指针
+		// Key exists; return a pointer to the existing value.
 		node, _, _ := e.m.findNode(e.key)
 		if node != nil {
 			return &node.value
 		}
-		// 如果由于某种原因无法获取节点，直接插入并再次尝试
+		// If the node is unexpectedly unavailable, insert and retry.
 	}
 
-	// 使用函数生成值并插入
+	// Build the value via callback and insert it.
 	value := f()
 	e.m.Insert(e.key, value)
 
-	// 获取插入后的节点并返回值的指针
+	// Fetch the inserted node and return a pointer to its value.
 	node, _, _ := e.m.findNode(e.key)
 	if node != nil {
 		return &node.value
 	}
 
-	// 理论上不应该到达这里，但为了安全返回nil
+	// This path should be unreachable; return nil defensively.
 	return nil
 }
 
@@ -91,27 +91,27 @@ func (e Entry[K, V]) OrInsertWith(f func() V) *V {
 // Returns:
 //   - A pointer to the existing value if the key was present, or the new value if it was inserted
 func (e Entry[K, V]) OrInsertWithKey(f func([]K) V) *V {
-	// 尝试获取现有值
+	// Try to retrieve an existing value first.
 	if _, found := e.m.Get(e.key); found {
-		// 键已存在，返回值的指针
+		// Key exists; return a pointer to the existing value.
 		node, _, _ := e.m.findNode(e.key)
 		if node != nil {
 			return &node.value
 		}
-		// 如果由于某种原因无法获取节点，直接插入并再次尝试
+		// If the node is unexpectedly unavailable, insert and retry.
 	}
 
-	// 使用函数生成值并插入
+	// Build the value via callback and insert it.
 	value := f(e.key)
 	e.m.Insert(e.key, value)
 
-	// 获取插入后的节点并返回值的指针
+	// Fetch the inserted node and return a pointer to its value.
 	node, _, _ := e.m.findNode(e.key)
 	if node != nil {
 		return &node.value
 	}
 
-	// 理论上不应该到达这里，但为了安全返回nil
+	// This path should be unreachable; return nil defensively.
 	return nil
 }
 
@@ -124,10 +124,10 @@ func (e Entry[K, V]) OrInsertWithKey(f func([]K) V) *V {
 // Returns:
 //   - The same Entry, allowing for chained calls to other methods
 func (e Entry[K, V]) AndModify(modifyFn func(*V)) Entry[K, V] {
-	// 使用m.findNode查找节点，避免重复实现查找逻辑
+	// Use m.findNode to avoid duplicating lookup logic.
 	node, _, _ := e.m.findNode(e.key)
 	if node != nil && node.hasValue {
-		// 获取值指针并应用修改函数
+		// Get the value pointer and apply the mutation callback.
 		valPtr := &node.value
 		modifyFn(valPtr)
 	}
@@ -143,11 +143,7 @@ func (e Entry[K, V]) AndModify(modifyFn func(*V)) Entry[K, V] {
 //   - If the key already existed, returns the old value and true
 //   - If the key did not exist, returns the zero value and false
 func (e Entry[K, V]) Insert(value V) (V, bool) {
-	// 获取旧值
-	oldVal, found := e.m.Get(e.key)
-	// 插入或更新值
-	e.m.Insert(e.key, value)
-	return oldVal, found
+	return e.m.insert(e.key, value)
 }
 
 // Delete removes the key from the map and returns whether the key was present.
@@ -155,7 +151,7 @@ func (e Entry[K, V]) Insert(value V) (V, bool) {
 // Returns:
 //   - A boolean indicating whether the key was present and removed
 func (e Entry[K, V]) Delete() bool {
-	// 使用Remove方法并提取布尔结果
+	// Call Remove and return its boolean status.
 	_, removed := e.m.Remove(e.key)
 	return removed
 }

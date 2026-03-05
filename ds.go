@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-board/ds/arraydeque"
 	"github.com/go-board/ds/arraystack"
+	"github.com/go-board/ds/bound"
 	"github.com/go-board/ds/btree"
 	"github.com/go-board/ds/btreemap"
 	"github.com/go-board/ds/btreeset"
@@ -38,6 +39,42 @@ type ArrayStack[T any] = arraystack.ArrayStack[T]
 // NewArrayStack creates a new slice-based stack instance.
 func NewArrayStack[T any]() *ArrayStack[T] {
 	return arraystack.New[T]()
+}
+
+// B-Tree
+
+// Bound Kind
+
+// BoundKind is an alias for [bound.Kind].
+type BoundKind = bound.Kind
+
+const (
+	// Unbounded means no boundary on this side.
+	Unbounded BoundKind = bound.Unbounded
+	// Included means boundary value is included.
+	Included BoundKind = bound.Included
+	// Excluded means boundary value is excluded.
+	Excluded BoundKind = bound.Excluded
+)
+
+// Bound is an alias for [bound.Bound].
+type Bound[T any] = bound.Bound[T]
+
+// RangeBounds is an alias for [bound.RangeBounds].
+type RangeBounds[T any] = bound.RangeBounds[T]
+
+// NewUnbounded creates an unbounded boundary.
+func NewUnbounded[T any]() Bound[T] { return bound.NewUnbounded[T]() }
+
+// NewIncluded creates an inclusive boundary.
+func NewIncluded[T any](value T) Bound[T] { return bound.NewIncluded(value) }
+
+// NewExcluded creates an exclusive boundary.
+func NewExcluded[T any](value T) Bound[T] { return bound.NewExcluded(value) }
+
+// NewRangeBounds creates a start/end range bounds object.
+func NewRangeBounds[T any](start, end Bound[T]) RangeBounds[T] {
+	return bound.NewRangeBounds(start, end)
 }
 
 // B-Tree

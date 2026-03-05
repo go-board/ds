@@ -95,22 +95,34 @@ func (e Entry[K, V, H]) Get() (V, bool) {
 	return e.node.value, true
 }
 
-// Insert inserts the value and returns a reference to it, regardless of whether the key exists
-func (e Entry[K, V, H]) Insert(value V) *V {
+// Insert inserts or updates the value and returns the old value if one existed.
+func (e Entry[K, V, H]) Insert(value V) (V, bool) {
 	if e.node != nil {
-		// Key exists, update the value
+		old := e.node.value
 		e.node.value = value
-		return &e.node.value
+		return old, true
 	}
 
-	// Key doesn't exist, insert new value
-	node := &node[K, V]{
-		key:     e.key,
-		value:   value,
-		deleted: false,
-	}
 	bucket := e.hashMap.getBucket(e.hash)
-	bucket.nodes = append(bucket.nodes, node)
+	for _, n := range bucket.nodes {
+		if n.deleted && e.hashMap.hasher.Equal(n.key, e.key) {
+			old := n.value
+			n.deleted = false
+			n.value = value
+			e.hashMap.size++
+			e.hashMap.deletedCount--
+			return old, true
+		}
+	}
+
+	var zero V
+	bucket.nodes = append(bucket.nodes, &node[K, V]{key: e.key, value: value})
 	e.hashMap.size++
-	return &node.value
+	return zero, false
+}
+
+// Delete removes the entry value and reports whether the key existed.
+func (e Entry[K, V, H]) Delete() bool {
+	_, ok := e.hashMap.Remove(e.key)
+	return ok
 }

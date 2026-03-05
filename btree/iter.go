@@ -2,51 +2,77 @@ package btree
 
 import (
 	"iter"
+
+	"github.com/go-board/ds/bound"
 )
 
-// Range returns a range iterator that traverses all elements in the BTree with values in [lowerBound, upperBound).
+// RangeAsc returns an ascending iterator that traverses elements in [lowerBound, upperBound).
 // Parameters:
-//   - lowerBound: The lower bound of the range (inclusive); if nil, no lower bound
-//   - upperBound: The upper bound of the range (exclusive); if nil, no upper bound
+//   - lowerBound: The lower bound of the range (inclusive); if nil, no lower bound.
+//   - upperBound: The upper bound of the range (exclusive); if nil, no upper bound.
 //
 // Returns:
-//   - An iter.Seq[E] iterator that produces all elements in the specified range in order
-func (bt *BTree[E]) Range(lowerBound, upperBound *E) iter.Seq[E] {
+//   - An iter.Seq[E] iterator that yields all elements in ascending order within the range.
+func (bt *BTree[E]) RangeAsc(bounds bound.RangeBounds[E]) iter.Seq[E] {
+	lowerBound, upperBound := coarseBounds(bounds)
 	return func(yield func(E) bool) {
 		if bt.root == nil {
 			return
 		}
-		bt.rangeNode(bt.root, lowerBound, upperBound, yield)
+		bt.rangeNode(bt.root, lowerBound, upperBound, func(e E) bool {
+			if !bounds.Contains(bt.comparator, e) {
+				return true
+			}
+			return yield(e)
+		})
 	}
 }
 
-// Iter returns a sequential iterator that traverses all elements in the BTree.
+// IterAsc returns an ascending iterator that traverses all elements in the BTree.
 // Returns:
-//   - An iter.Seq[E] iterator that produces all elements in the BTree in order
-func (bt *BTree[E]) Iter() iter.Seq[E] {
-	return bt.Range(nil, nil)
+//   - An iter.Seq[E] iterator that yields all elements in ascending order.
+func (bt *BTree[E]) IterAsc() iter.Seq[E] {
+	return bt.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[E](), bound.NewUnbounded[E]()))
 }
 
-// RangeBack returns a reverse iterator that traverses all elements in the BTree with values in [lowerBound, upperBound)
-// 参数:
-//   - lowerBound: 范围的下界（包含），如果为nil则没有下界
-//   - upperBound: 范围的上界（不包含），如果为nil则没有上界
+// RangeDesc returns a descending iterator that traverses elements in [lowerBound, upperBound).
+// Parameters:
+//   - lowerBound: inclusive lower bound; nil means unbounded.
+//   - upperBound: exclusive upper bound; nil means unbounded.
 //
-// 返回:
-//   - 一个iter.Seq[E]类型的迭代器，按逆序产生指定范围内的所有元素
-func (bt *BTree[E]) RangeBack(lowerBound, upperBound *E) iter.Seq[E] {
+// Returns:
+//   - An iter.Seq[E] iterator that yields elements in descending order within the range.
+func (bt *BTree[E]) RangeDesc(bounds bound.RangeBounds[E]) iter.Seq[E] {
+	lowerBound, upperBound := coarseBounds(bounds)
 	return func(yield func(E) bool) {
 		if bt.root == nil {
 			return
 		}
-		bt.rangeNodeBack(bt.root, lowerBound, upperBound, yield)
+		bt.rangeNodeBack(bt.root, lowerBound, upperBound, func(e E) bool {
+			if !bounds.Contains(bt.comparator, e) {
+				return true
+			}
+			return yield(e)
+		})
 	}
 }
 
-// IterBack 返回一个逆序迭代器，用于从后向前遍历BTree中的所有元素
-// 返回:
-//   - 一个iter.Seq[E]类型的迭代器，按逆序产生BTree中的所有元素
-func (bt *BTree[E]) IterBack() iter.Seq[E] {
+func coarseBounds[E any](bounds bound.RangeBounds[E]) (lower, upper *E) {
+	if v, ok := bounds.Start.Value(); ok {
+		lower = &v
+	}
+	if bounds.End.IsExcluded() {
+		if v, ok := bounds.End.Value(); ok {
+			upper = &v
+		}
+	}
+	return
+}
+
+// IterDesc returns a descending iterator that walks all elements from back to front.
+// Returns:
+//   - An iter.Seq[E] iterator that yields all elements in descending order.
+func (bt *BTree[E]) IterDesc() iter.Seq[E] {
 	return func(yield func(E) bool) {
 		if bt.root == nil {
 			return

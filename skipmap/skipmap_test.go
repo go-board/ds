@@ -2,6 +2,7 @@ package skipmap
 
 import (
 	"fmt"
+	"github.com/go-board/ds/bound"
 	"math/rand"
 	"testing"
 	"time"
@@ -121,66 +122,66 @@ func TestSkipMapIterators(t *testing.T) {
 		sm.Insert(item.Key, item.Value)
 	}
 
-	// Test Iter()
+	// Test IterAsc()
 	iterData := make(map[string]int)
-	for k, v := range sm.Iter() {
+	for k, v := range sm.IterAsc() {
 		iterData[k] = v
 	}
 
 	for _, item := range data {
 		if val, ok := iterData[item.Key]; !ok || val != item.Value {
-			t.Errorf("Iter() missing or wrong value for key %s: expected %d, got %v, %d", item.Key, item.Value, ok, val)
+			t.Errorf("IterAsc() missing or wrong value for key %s: expected %d, got %v, %d", item.Key, item.Value, ok, val)
 		}
 	}
 
-	// Test Keys()
+	// Test KeysAsc()
 	keys := make([]string, 0)
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		keys = append(keys, k)
 	}
 
 	expectedKeys := []string{"a", "b", "c", "d", "e"}
 	if len(keys) != len(expectedKeys) {
-		t.Errorf("Keys() returned wrong number of keys: expected %d, got %d", len(expectedKeys), len(keys))
+		t.Errorf("KeysAsc() returned wrong number of keys: expected %d, got %d", len(expectedKeys), len(keys))
 	} else {
 		for i, k := range keys {
 			if k != expectedKeys[i] {
-				t.Errorf("Keys() returned wrong order at index %d: expected %s, got %s", i, expectedKeys[i], k)
+				t.Errorf("KeysAsc() returned wrong order at index %d: expected %s, got %s", i, expectedKeys[i], k)
 			}
 		}
 	}
 
-	// Test Values()
+	// Test ValuesAsc()
 	values := make([]int, 0)
-	for v := range sm.Values() {
+	for v := range sm.ValuesAsc() {
 		values = append(values, v)
 	}
 
 	expectedValues := []int{1, 2, 3, 4, 5}
 	if len(values) != len(expectedValues) {
-		t.Errorf("Values() returned wrong number of values: expected %d, got %d", len(expectedValues), len(values))
+		t.Errorf("ValuesAsc() returned wrong number of values: expected %d, got %d", len(expectedValues), len(values))
 	} else {
 		for i, v := range values {
 			if v != expectedValues[i] {
-				t.Errorf("Values() returned wrong order at index %d: expected %d, got %d", i, expectedValues[i], v)
+				t.Errorf("ValuesAsc() returned wrong order at index %d: expected %d, got %d", i, expectedValues[i], v)
 			}
 		}
 	}
 
-	// Test ValuesMut() and IterMut()
-	for v := range sm.ValuesMut() {
+	// Test ValuesMutAsc() and IterMutAsc()
+	for v := range sm.ValuesMutAsc() {
 		*v *= 2 // Multiply each value by 2
 	}
 
 	// Verify values have been modified
 	for _, item := range data {
 		if val, found := sm.Get(item.Key); !found || val != item.Value*2 {
-			t.Errorf("ValuesMut() failed to modify value for key %s: expected %d, got %v, %d", item.Key, item.Value*2, found, val)
+			t.Errorf("ValuesMutAsc() failed to modify value for key %s: expected %d, got %v, %d", item.Key, item.Value*2, found, val)
 		}
 	}
 
-	// Modify back with IterMut
-	for k, v := range sm.IterMut() {
+	// Modify back with IterMutAsc
+	for k, v := range sm.IterMutAsc() {
 		for _, item := range data {
 			if k == item.Key {
 				*v = item.Value // Restore original value
@@ -192,13 +193,13 @@ func TestSkipMapIterators(t *testing.T) {
 	// Verify values have been restored
 	for _, item := range data {
 		if val, found := sm.Get(item.Key); !found || val != item.Value {
-			t.Errorf("IterMut() failed to restore value for key %s: expected %d, got %v, %d", item.Key, item.Value, found, val)
+			t.Errorf("IterMutAsc() failed to restore value for key %s: expected %d, got %v, %d", item.Key, item.Value, found, val)
 		}
 	}
 }
 
 // Test range query functionality
-func TestSkipMapRange(t *testing.T) {
+func TestSkipMapRangeAsc(t *testing.T) {
 	sm := NewOrdered[string, int]()
 
 	// Insert some key-value pairs
@@ -218,12 +219,12 @@ func TestSkipMapRange(t *testing.T) {
 
 	// Test full range [nil, nil)
 	fullRange := make(map[string]int)
-	for k, v := range sm.Range(nil, nil) {
+	for k, v := range sm.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewUnbounded[string]())) {
 		fullRange[k] = v
 	}
 
 	if len(fullRange) != len(data) {
-		t.Errorf("Range(nil, nil) returned wrong number of items: expected %d, got %d", len(data), len(fullRange))
+		t.Errorf("RangeAsc(nil, nil) returned wrong number of items: expected %d, got %d", len(data), len(fullRange))
 	}
 
 	// Test left-closed, right-open range ["b", "f")
@@ -231,17 +232,17 @@ func TestSkipMapRange(t *testing.T) {
 	upperB := "f"
 	expected := map[string]int{"b": 2, "c": 3, "d": 4, "e": 5}
 	rangeData := make(map[string]int)
-	for k, v := range sm.Range(&lowerB, &upperB) {
+	for k, v := range sm.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerB), bound.NewExcluded(upperB))) {
 		rangeData[k] = v
 	}
 
 	if len(rangeData) != len(expected) {
-		t.Errorf("Range(\"b\", \"f\") returned wrong number of items: expected %d, got %d", len(expected), len(rangeData))
+		t.Errorf("RangeAsc(\"b\", \"f\") returned wrong number of items: expected %d, got %d", len(expected), len(rangeData))
 	}
 
 	for k, v := range expected {
 		if val, ok := rangeData[k]; !ok || val != v {
-			t.Errorf("Range(\"b\", \"f\") missing or wrong value for key %s: expected %d, got %v, %d", k, v, ok, val)
+			t.Errorf("RangeAsc(\"b\", \"f\") missing or wrong value for key %s: expected %d, got %v, %d", k, v, ok, val)
 		}
 	}
 
@@ -249,24 +250,24 @@ func TestSkipMapRange(t *testing.T) {
 	lowerD := "d"
 	expectedLower := map[string]int{"d": 4, "e": 5, "f": 6, "g": 7}
 	lowerRange := make(map[string]int)
-	for k, v := range sm.Range(&lowerD, nil) {
+	for k, v := range sm.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerD), bound.NewUnbounded[string]())) {
 		lowerRange[k] = v
 	}
 
 	if len(lowerRange) != len(expectedLower) {
-		t.Errorf("Range(\"d\", nil) returned wrong number of items: expected %d, got %d", len(expectedLower), len(lowerRange))
+		t.Errorf("RangeAsc(\"d\", nil) returned wrong number of items: expected %d, got %d", len(expectedLower), len(lowerRange))
 	}
 
 	// Test range with only upper bound [nil, "c")
 	upperC := "c"
 	expectedUpper := map[string]int{"a": 1, "b": 2}
 	upperRange := make(map[string]int)
-	for k, v := range sm.Range(nil, &upperC) {
+	for k, v := range sm.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewExcluded(upperC))) {
 		upperRange[k] = v
 	}
 
 	if len(upperRange) != len(expectedUpper) {
-		t.Errorf("Range(nil, \"c\") returned wrong number of items: expected %d, got %d", len(expectedUpper), len(upperRange))
+		t.Errorf("RangeAsc(nil, \"c\") returned wrong number of items: expected %d, got %d", len(expectedUpper), len(upperRange))
 	}
 }
 
@@ -332,13 +333,13 @@ func TestSkipMapEntryAPI(t *testing.T) {
 
 	// Test Get method
 	v, ok := sm.Entry("apple").Get()
-	if !ok || *v != 10 {
+	if !ok || v != 10 {
 		t.Errorf("Entry.Get() should return 10, true for existing key, got %v, %v", v, ok)
 	}
 
 	v, ok = sm.Entry("grape").Get()
-	if ok || v != nil {
-		t.Errorf("Entry.Get() should return nil, false for non-existing key, got %v, %v", v, ok)
+	if ok || v != 0 {
+		t.Errorf("Entry.Get() should return zero, false for non-existing key, got %v, %v", v, ok)
 	}
 
 	// Test Insert method
@@ -601,7 +602,7 @@ func TestSkipMapCustomComparator(t *testing.T) {
 
 	// Verify order is sorted by length
 	keys := make([]string, 0)
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		keys = append(keys, k)
 	}
 
@@ -664,7 +665,7 @@ func TestSkipMapLargeLoad(t *testing.T) {
 
 	// Test iteration order (should be sorted by keys)
 	keys := make([]int, 0, len(data))
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		keys = append(keys, k)
 	}
 
@@ -751,7 +752,7 @@ func TestSkipMapCustomKeyType(t *testing.T) {
 
 	// Test iteration order (should be sorted by age)
 	ages := make([]int, 0)
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		ages = append(ages, k.Age)
 	}
 
@@ -773,7 +774,7 @@ func TestSkipMapMutIterators(t *testing.T) {
 	sm.Insert("c", 3)
 
 	// Test ValuesMut modification
-	for v := range sm.ValuesMut() {
+	for v := range sm.ValuesMutAsc() {
 		*v *= 10
 	}
 
@@ -786,8 +787,8 @@ func TestSkipMapMutIterators(t *testing.T) {
 		}
 	}
 
-	// Test IterMut modification
-	for _, v := range sm.IterMut() {
+	// Test IterMutAsc modification
+	for _, v := range sm.IterMutAsc() {
 		*v += 1
 	}
 
@@ -796,7 +797,7 @@ func TestSkipMapMutIterators(t *testing.T) {
 	for k, expVal := range expected {
 		val, found := sm.Get(k)
 		if !found || val != expVal {
-			t.Errorf("IterMut: Get(%s) should return %d, true, got %d, %v", k, expVal, val, found)
+			t.Errorf("IterMutAsc: Get(%s) should return %d, true, got %d, %v", k, expVal, val, found)
 		}
 	}
 }
@@ -812,7 +813,7 @@ func TestSkipMapModifyDuringIteration(t *testing.T) {
 
 	// Delete some keys during iteration
 	toDelete := []string{"key2", "key5", "key8"}
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		for _, delKey := range toDelete {
 			if k == delKey {
 				sm.Remove(k)
@@ -989,43 +990,43 @@ func TestSkipMapIteratorsEdgeCases(t *testing.T) {
 
 	// Test iterators on empty map
 	count := 0
-	for range sm.Keys() {
+	for range sm.KeysAsc() {
 		count++
 	}
 	if count != 0 {
-		t.Errorf("Keys() on empty map should yield 0 items, got %d", count)
+		t.Errorf("KeysAsc() on empty map should yield 0 items, got %d", count)
 	}
 
 	count = 0
-	for range sm.Values() {
+	for range sm.ValuesAsc() {
 		count++
 	}
 	if count != 0 {
-		t.Errorf("Values() on empty map should yield 0 items, got %d", count)
+		t.Errorf("ValuesAsc() on empty map should yield 0 items, got %d", count)
 	}
 
 	count = 0
-	for range sm.ValuesMut() {
+	for range sm.ValuesMutAsc() {
 		count++
 	}
 	if count != 0 {
-		t.Errorf("ValuesMut() on empty map should yield 0 items, got %d", count)
+		t.Errorf("ValuesMutAsc() on empty map should yield 0 items, got %d", count)
 	}
 
 	count = 0
-	for range sm.Iter() {
+	for range sm.IterAsc() {
 		count++
 	}
 	if count != 0 {
-		t.Errorf("Iter() on empty map should yield 0 items, got %d", count)
+		t.Errorf("IterAsc() on empty map should yield 0 items, got %d", count)
 	}
 
 	count = 0
-	for range sm.IterMut() {
+	for range sm.IterMutAsc() {
 		count++
 	}
 	if count != 0 {
-		t.Errorf("IterMut() on empty map should yield 0 items, got %d", count)
+		t.Errorf("IterMutAsc() on empty map should yield 0 items, got %d", count)
 	}
 
 	// Insert a single element for testing
@@ -1033,23 +1034,23 @@ func TestSkipMapIteratorsEdgeCases(t *testing.T) {
 
 	// Test iterators on single-element map
 	keys := make([]string, 0)
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		keys = append(keys, k)
 	}
 	if len(keys) != 1 || keys[0] != "single" {
-		t.Errorf("Keys() on single-element map should yield ['single'], got %v", keys)
+		t.Errorf("KeysAsc() on single-element map should yield ['single'], got %v", keys)
 	}
 
 	values := make([]int, 0)
-	for v := range sm.Values() {
+	for v := range sm.ValuesAsc() {
 		values = append(values, v)
 	}
 	if len(values) != 1 || values[0] != 1 {
-		t.Errorf("Values() on single-element map should yield [1], got %v", values)
+		t.Errorf("ValuesAsc() on single-element map should yield [1], got %v", values)
 	}
 
 	// Test ValuesMut on single element
-	for v := range sm.ValuesMut() {
+	for v := range sm.ValuesMutAsc() {
 		*v = 42
 	}
 
@@ -1058,8 +1059,8 @@ func TestSkipMapIteratorsEdgeCases(t *testing.T) {
 		t.Errorf("ValuesMut should modify value to 42, got %d", val)
 	}
 
-	// Test IterMut on single element
-	for k, v := range sm.IterMut() {
+	// Test IterMutAsc on single element
+	for k, v := range sm.IterMutAsc() {
 		if k == "single" {
 			*v = 100
 		}
@@ -1067,7 +1068,7 @@ func TestSkipMapIteratorsEdgeCases(t *testing.T) {
 
 	val, found = sm.Get("single")
 	if !found || val != 100 {
-		t.Errorf("IterMut should modify value to 100, got %d", val)
+		t.Errorf("IterMutAsc should modify value to 100, got %d", val)
 	}
 }
 
@@ -1139,7 +1140,7 @@ func TestSkipMapNewNormalCases(t *testing.T) {
 
 	// Verify sorting by length
 	keys := make([]string, 0)
-	for k := range sm.Keys() {
+	for k := range sm.KeysAsc() {
 		keys = append(keys, k)
 	}
 
@@ -1162,7 +1163,7 @@ func TestSkipMapIteratorsEarlyTermination(t *testing.T) {
 
 	// Test early termination of Keys iterator
 	count := 0
-	for range sm.Keys() {
+	for range sm.KeysAsc() {
 		count++
 		if count == 5 {
 			break
@@ -1174,7 +1175,7 @@ func TestSkipMapIteratorsEarlyTermination(t *testing.T) {
 
 	// Test early termination of Values iterator
 	count = 0
-	for range sm.Values() {
+	for range sm.ValuesAsc() {
 		count++
 		if count == 3 {
 			break
@@ -1186,7 +1187,7 @@ func TestSkipMapIteratorsEarlyTermination(t *testing.T) {
 
 	// Test early termination of ValuesMut iterator
 	count = 0
-	for range sm.ValuesMut() {
+	for range sm.ValuesMutAsc() {
 		count++
 		if count == 4 {
 			break
@@ -1198,7 +1199,7 @@ func TestSkipMapIteratorsEarlyTermination(t *testing.T) {
 
 	// Test early termination of Iter iterator
 	count = 0
-	for range sm.Iter() {
+	for range sm.IterAsc() {
 		count++
 		if count == 6 {
 			break
@@ -1208,16 +1209,16 @@ func TestSkipMapIteratorsEarlyTermination(t *testing.T) {
 		t.Errorf("Iter iterator should yield 6 elements before break, got %d", count)
 	}
 
-	// Test early termination of IterMut iterator
+	// Test early termination of IterMutAsc iterator
 	count = 0
-	for range sm.IterMut() {
+	for range sm.IterMutAsc() {
 		count++
 		if count == 2 {
 			break
 		}
 	}
 	if count != 2 {
-		t.Errorf("IterMut iterator should yield 2 elements before break, got %d", count)
+		t.Errorf("IterMutAsc iterator should yield 2 elements before break, got %d", count)
 	}
 
 	// Verify map structure is not corrupted
@@ -1239,7 +1240,7 @@ func TestSkipMapRangeMoreBranches(t *testing.T) {
 	lower := "key5"
 	upper := "key8"
 	count := 0
-	for range sm.Range(&lower, &upper) {
+	for range sm.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		count++
 		if count == 3 {
 			break
@@ -1252,7 +1253,7 @@ func TestSkipMapRangeMoreBranches(t *testing.T) {
 	// Test case with only lower bound
 	lower = "key10"
 	count = 0
-	for range sm.Range(&lower, nil) {
+	for range sm.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewUnbounded[string]())) {
 		count++
 		if count == 5 {
 			break
@@ -1265,7 +1266,7 @@ func TestSkipMapRangeMoreBranches(t *testing.T) {
 	// Test case with only upper bound
 	upper = "key4"
 	count = 0
-	for range sm.Range(nil, &upper) {
+	for range sm.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewExcluded(upper))) {
 		count++
 		if count == 3 {
 			break
@@ -1284,7 +1285,7 @@ func TestSkipMapRangeMoreBranches(t *testing.T) {
 	lower = "key15"
 	upper = "key10"
 	count = 0
-	for range sm.Range(&lower, &upper) {
+	for range sm.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		count++
 	}
 	if count != 0 {
@@ -1295,7 +1296,7 @@ func TestSkipMapRangeMoreBranches(t *testing.T) {
 	lower = "key10"
 	upper = "key12"
 	values := make([]int, 0)
-	for k, v := range sm.Range(&lower, &upper) {
+	for k, v := range sm.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		if k == "key10" {
 			values = append(values, v)
 		}

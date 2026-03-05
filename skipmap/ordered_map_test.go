@@ -1,6 +1,7 @@
 package skipmap
 
 import (
+	"github.com/go-board/ds/bound"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestSkipMapOrderedMapMethods(t *testing.T) {
 		lower := "b"
 		upper := "d"
 		count := 0
-		for k, vPtr := range m.RangeMut(&lower, &upper) {
+		for k, vPtr := range m.RangeMutAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 			count++
 			if k == "b" {
 				*vPtr = 20
@@ -43,31 +44,31 @@ func TestSkipMapOrderedMapMethods(t *testing.T) {
 		}
 	})
 
-	// Test IterBack
-	t.Run("IterBack", func(t *testing.T) {
+	// Test IterDesc
+	t.Run("IterDesc", func(t *testing.T) {
 		expectedKeys := []string{"e", "d", "c", "b", "a"}
 		var actualKeys []string
-		for k, _ := range m.IterBack() {
+		for k, _ := range m.IterDesc() {
 			actualKeys = append(actualKeys, k)
 		}
 
 		if len(actualKeys) != len(expectedKeys) {
-			t.Errorf("Expected %d keys from IterBack, got %d", len(expectedKeys), len(actualKeys))
+			t.Errorf("Expected %d keys from IterDesc, got %d", len(expectedKeys), len(actualKeys))
 			return
 		}
 
 		for i, key := range expectedKeys {
 			if actualKeys[i] != key {
-				t.Errorf("IterBack: expected key %s at index %d, got %s", key, i, actualKeys[i])
+				t.Errorf("IterDesc: expected key %s at index %d, got %s", key, i, actualKeys[i])
 				return
 			}
 		}
 	})
 
-	// Test IterBackMut
-	t.Run("IterBackMut", func(t *testing.T) {
-		// Modify values using IterBackMut
-		for k, vPtr := range m.IterBackMut() {
+	// Test IterMutDesc
+	t.Run("IterMutDesc", func(t *testing.T) {
+		// Modify values using IterMutDesc
+		for k, vPtr := range m.IterMutDesc() {
 			if k == "e" {
 				*vPtr = 50
 			}
@@ -85,52 +86,52 @@ func TestSkipMapOrderedMapMethods(t *testing.T) {
 		}
 	})
 
-	// Test KeysBack
-	t.Run("KeysBack", func(t *testing.T) {
+	// Test KeysDesc
+	t.Run("KeysDesc", func(t *testing.T) {
 		expectedKeys := []string{"e", "d", "c", "b", "a"}
 		var actualKeys []string
-		for k := range m.KeysBack() {
+		for k := range m.KeysDesc() {
 			actualKeys = append(actualKeys, k)
 		}
 
 		if len(actualKeys) != len(expectedKeys) {
-			t.Errorf("Expected %d keys from KeysBack, got %d", len(expectedKeys), len(actualKeys))
+			t.Errorf("Expected %d keys from KeysDesc, got %d", len(expectedKeys), len(actualKeys))
 			return
 		}
 
 		for i, key := range expectedKeys {
 			if actualKeys[i] != key {
-				t.Errorf("KeysBack: expected key %s at index %d, got %s", key, i, actualKeys[i])
+				t.Errorf("KeysDesc: expected key %s at index %d, got %s", key, i, actualKeys[i])
 				return
 			}
 		}
 	})
 
-	// Test ValuesBack
-	t.Run("ValuesBack", func(t *testing.T) {
+	// Test ValuesDesc
+	t.Run("ValuesDesc", func(t *testing.T) {
 		expectedValues := []int{50, 40, 30, 20, 1}
 		var actualValues []int
-		for v := range m.ValuesBack() {
+		for v := range m.ValuesDesc() {
 			actualValues = append(actualValues, v)
 		}
 
 		if len(actualValues) != len(expectedValues) {
-			t.Errorf("Expected %d values from ValuesBack, got %d", len(expectedValues), len(actualValues))
+			t.Errorf("Expected %d values from ValuesDesc, got %d", len(expectedValues), len(actualValues))
 			return
 		}
 
 		for i, val := range expectedValues {
 			if actualValues[i] != val {
-				t.Errorf("ValuesBack: expected value %d at index %d, got %d", val, i, actualValues[i])
+				t.Errorf("ValuesDesc: expected value %d at index %d, got %d", val, i, actualValues[i])
 				return
 			}
 		}
 	})
 
-	// Test ValuesBackMut
-	t.Run("ValuesBackMut", func(t *testing.T) {
-		// Modify values using ValuesBackMut
-		for vPtr := range m.ValuesBackMut() {
+	// Test ValuesMutDesc
+	t.Run("ValuesMutDesc", func(t *testing.T) {
+		// Modify values using ValuesMutDesc
+		for vPtr := range m.ValuesMutDesc() {
 			*vPtr *= 2
 		}
 
@@ -202,31 +203,31 @@ func TestSkipMapEdgeCases(t *testing.T) {
 
 		// Test with both bounds nil (should return all elements)
 		count := 0
-		for range m.Range(nil, nil) {
+		for range m.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewUnbounded[string]())) {
 			count++
 		}
 		if count != 3 {
-			t.Errorf("Expected Range(nil, nil) to return all 3 elements, got %d", count)
+			t.Errorf("Expected RangeAsc(nil, nil) to return all 3 elements, got %d", count)
 		}
 
 		// Test with only lower bound nil
 		upper := "b"
 		count = 0
-		for range m.Range(nil, &upper) {
+		for range m.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewExcluded(upper))) {
 			count++
 		}
 		if count != 1 {
-			t.Errorf("Expected Range(nil, &upper) to return 1 element, got %d", count)
+			t.Errorf("Expected RangeAsc(nil, &upper) to return 1 element, got %d", count)
 		}
 
 		// Test with only upper bound nil
 		lower := "b"
 		count = 0
-		for range m.Range(&lower, nil) {
+		for range m.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewUnbounded[string]())) {
 			count++
 		}
 		if count != 2 {
-			t.Errorf("Expected Range(&lower, nil) to return 2 elements, got %d", count)
+			t.Errorf("Expected RangeAsc(&lower, nil) to return 2 elements, got %d", count)
 		}
 	})
 
@@ -239,11 +240,11 @@ func TestSkipMapEdgeCases(t *testing.T) {
 
 		// Test with both bounds nil (should return all elements)
 		count := 0
-		for range m.RangeMut(nil, nil) {
+		for range m.RangeMutAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewUnbounded[string]())) {
 			count++
 		}
 		if count != 3 {
-			t.Errorf("Expected RangeMut(nil, nil) to return all 3 elements, got %d", count)
+			t.Errorf("Expected RangeMutAsc(nil, nil) to return all 3 elements, got %d", count)
 		}
 	})
 }
