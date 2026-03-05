@@ -3,142 +3,83 @@ package btreemap
 import (
 	"iter"
 
+	"github.com/go-board/ds/bound"
 	diter "github.com/go-board/ds/internal/iter"
 )
 
-// Iter returns an iterator that yields all key/value pairs in the BTreeMap
-// in ascending order by key.
-//
-// Return value:
-//   - An `iter.Seq2[K, V]` iterator that produces all key/value pairs
-func (m *BTreeMap[K, V]) Iter() iter.Seq2[K, V] {
-	return diter.Split(m.btree.Iter(), (*node[K, V]).kv)
+// IterAsc returns an iterator over all key/value pairs in ascending key order.
+func (m *BTreeMap[K, V]) IterAsc() iter.Seq2[K, V] {
+	return diter.Split(m.btree.IterAsc(), (*node[K, V]).kv)
 }
 
-// IterMut returns a mutable iterator that yields all key/value pairs in the
-// BTreeMap in ascending key order, providing pointers to values for in-place
-// modification.
-//
-// Return value:
-//   - An `iter.Seq2[K, *V]` iterator that produces each key and a pointer to its value
-func (m *BTreeMap[K, V]) IterMut() iter.Seq2[K, *V] {
-	return diter.Split(m.btree.Iter(), (*node[K, V]).kvMut)
+// IterMutAsc returns a mutable iterator over all key/value pairs in ascending key order.
+func (m *BTreeMap[K, V]) IterMutAsc() iter.Seq2[K, *V] {
+	return diter.Split(m.btree.IterAsc(), (*node[K, V]).kvMut)
 }
 
-// IterBack returns a reverse iterator that yields all key/value pairs in the
-// BTreeMap in descending key order.
-//
-// Return value:
-//   - An `iter.Seq2[K, V]` iterator that produces all key/value pairs
-func (m *BTreeMap[K, V]) IterBack() iter.Seq2[K, V] {
-	return diter.Split(m.btree.IterBack(), (*node[K, V]).kv)
+// IterDesc returns an iterator over all key/value pairs in descending key order.
+func (m *BTreeMap[K, V]) IterDesc() iter.Seq2[K, V] {
+	return diter.Split(m.btree.IterDesc(), (*node[K, V]).kv)
 }
 
-// IterBackMut returns a mutable reverse iterator that yields all key/value
-// pairs in the BTreeMap in descending key order, providing pointers to values
-// for in-place modification.
-//
-// Return value:
-//   - An `iter.Seq2[K, *V]` iterator that produces each key and a pointer to its value
-func (m *BTreeMap[K, V]) IterBackMut() iter.Seq2[K, *V] {
-	return diter.Split(m.btree.IterBack(), (*node[K, V]).kvMut)
+// IterMutDesc returns a mutable iterator over all key/value pairs in descending key order.
+func (m *BTreeMap[K, V]) IterMutDesc() iter.Seq2[K, *V] {
+	return diter.Split(m.btree.IterDesc(), (*node[K, V]).kvMut)
 }
 
-// RangeMut returns a mutable iterator over key-value pairs where the key is in the [lowerBound, upperBound) range.
-// Parameters:
-//   - lowerBound: Lower bound of the range (inclusive), nil means no lower bound
-//   - upperBound: Upper bound of the range (exclusive), nil means no upper bound
-//
-// Return value:
-//   - Mutable iterator over key-value pairs within the specified range, sorted by key in ascending order
-func (m *BTreeMap[K, V]) RangeMut(lowerBound, upperBound *K) iter.Seq2[K, *V] {
-	return diter.Split(m.rangeNode(lowerBound, upperBound), (*node[K, V]).kvMut)
+// RangeAsc returns an iterator over key/value pairs in ascending key order within bounds.
+func (m *BTreeMap[K, V]) RangeAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
+	return diter.Split(m.rangeNode(bounds, false), (*node[K, V]).kv)
 }
 
-// Range returns an iterator over key-value pairs where the key is in the [lowerBound, upperBound) range.
-//
-// Parameters:
-//   - lowerBound: Lower bound of the range (inclusive), nil means no lower bound
-//   - upperBound: Upper bound of the range (exclusive), nil means no upper bound
-//
-// Return value:
-//   - Iterator over key-value pairs within the specified range, sorted by key in ascending order
-func (m *BTreeMap[K, V]) Range(lowerBound, upperBound *K) iter.Seq2[K, V] {
-	return diter.Split(m.rangeNode(lowerBound, upperBound), (*node[K, V]).kv)
+// RangeMutAsc returns a mutable iterator over key/value pairs in ascending key order within bounds.
+func (m *BTreeMap[K, V]) RangeMutAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V] {
+	return diter.Split(m.rangeNode(bounds, false), (*node[K, V]).kvMut)
 }
 
-func (m *BTreeMap[K, V]) rangeNode(lowerBound, upperBound *K) iter.Seq[*node[K, V]] {
-	var lowerNode, upperNode *node[K, V]
-	if lowerBound != nil {
-		lowerNode = &node[K, V]{Key: *lowerBound}
+// RangeDesc returns an iterator over key/value pairs in descending key order within bounds.
+func (m *BTreeMap[K, V]) RangeDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
+	return diter.Split(m.rangeNode(bounds, true), (*node[K, V]).kv)
+}
+
+// RangeMutDesc returns a mutable iterator over key/value pairs in descending key order within bounds.
+func (m *BTreeMap[K, V]) RangeMutDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V] {
+	return diter.Split(m.rangeNode(bounds, true), (*node[K, V]).kvMut)
+}
+
+func (m *BTreeMap[K, V]) rangeNode(bounds bound.RangeBounds[K], desc bool) iter.Seq[*node[K, V]] {
+	nb := mapBounds[K, V](bounds)
+	if desc {
+		return m.btree.RangeDesc(nb)
 	}
-	if upperBound != nil {
-		upperNode = &node[K, V]{Key: *upperBound}
+	return m.btree.RangeAsc(nb)
+}
+
+func mapBounds[K, V any](b bound.RangeBounds[K]) bound.RangeBounds[*node[K, V]] {
+	mapOne := func(src bound.Bound[K]) bound.Bound[*node[K, V]] {
+		switch src.Kind() {
+		case bound.Unbounded:
+			return bound.NewUnbounded[*node[K, V]]()
+		case bound.Included:
+			v, _ := src.Value()
+			return bound.NewIncluded(&node[K, V]{Key: v})
+		default:
+			v, _ := src.Value()
+			return bound.NewExcluded(&node[K, V]{Key: v})
+		}
 	}
-	var lowerPtr, upperPtr **node[K, V]
-	if lowerNode != nil {
-		lowerPtr = &lowerNode
-	}
-	if upperNode != nil {
-		upperPtr = &upperNode
-	}
-	return m.btree.Range(lowerPtr, upperPtr)
+	return bound.NewRangeBounds(mapOne(b.Start), mapOne(b.End))
 }
 
-// Keys returns an iterator over all keys in the BTreeMap.
-//
-// Return value:
-//   - Iterator over keys, of type iter.Seq[K]
-func (m *BTreeMap[K, V]) Keys() iter.Seq[K] {
-	return diter.Keys(m.Iter())
+func (m *BTreeMap[K, V]) KeysAsc() iter.Seq[K]       { return diter.Keys(m.IterAsc()) }
+func (m *BTreeMap[K, V]) ValuesAsc() iter.Seq[V]     { return diter.Values(m.IterAsc()) }
+func (m *BTreeMap[K, V]) ValuesMutAsc() iter.Seq[*V] { return diter.Values(m.IterMutAsc()) }
+func (m *BTreeMap[K, V]) KeysDesc() iter.Seq[K]      { return diter.Keys(m.IterDesc()) }
+func (m *BTreeMap[K, V]) ValuesDesc() iter.Seq[V]    { return diter.Values(m.IterDesc()) }
+func (m *BTreeMap[K, V]) ValuesMutDesc() iter.Seq[*V] {
+	return diter.Values(m.IterMutDesc())
 }
 
-// Values returns an iterator over all values in the BTreeMap.
-//
-// Return value:
-//   - Iterator over values, of type iter.Seq[V]
-func (m *BTreeMap[K, V]) Values() iter.Seq[V] {
-	return diter.Values(m.Iter())
-}
-
-// ValuesMut returns a mutable iterator over all values in the BTreeMap.
-//
-// Return value:
-//   - Iterator over mutable values, of type iter.Seq[*V]
-func (m *BTreeMap[K, V]) ValuesMut() iter.Seq[*V] {
-	return diter.Values(m.IterMut())
-}
-
-// KeysBack returns an iterator over all keys in the BTreeMap, in reverse order.
-//
-// Return value:
-//   - Iterator over keys, of type iter.Seq[K]s
-func (m *BTreeMap[K, V]) KeysBack() iter.Seq[K] {
-	return diter.Keys(m.IterBack())
-}
-
-// ValuesBack returns an iterator over all values in the BTreeMap, in reverse order.
-//
-// Return value:
-//   - Iterator over values, of type iter.Seq[V]
-func (m *BTreeMap[K, V]) ValuesBack() iter.Seq[V] {
-	return diter.Values(m.IterBack())
-}
-
-// ValuesBackMut returns a mutable iterator over all values in the BTreeMap, in reverse order.
-//
-// Return value:
-//   - Iterator over mutable values, of type iter.Seq[*V]
-func (m *BTreeMap[K, V]) ValuesBackMut() iter.Seq[*V] {
-	return diter.Values(m.IterBackMut())
-}
-
-// Extend adds another iterable collection of key-value pairs to the current map.
-// Parameters:
-//   - it: Iterator providing key-value pairs
-//
-// Behavior:
-//   - For each key-value pair, if the key exists, its value is updated; otherwise, a new key-value pair is added
 func (m *BTreeMap[K, V]) Extend(it iter.Seq2[K, V]) {
 	for k, v := range it {
 		m.Insert(k, v)

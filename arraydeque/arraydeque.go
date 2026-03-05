@@ -192,7 +192,7 @@ func (d *ArrayDeque[T]) Clear() {
 // Time complexity: O(n)
 func (d *ArrayDeque[T]) ShrinkToFit() {
 	if len(d.data) == 0 {
-		d.data = make([]T, 0, 8) // 保持最小容量8，不设为nil
+		d.data = make([]T, 0, 8) // Keep minimum capacity at 8 instead of setting to nil.
 		return
 	}
 	newData := make([]T, len(d.data))

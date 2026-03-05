@@ -42,7 +42,7 @@ import (
 	"github.com/go-board/ds/hashutil"
 )
 
-var nothing struct{} // 用于HashMap的值部分，节省空间
+var nothing struct{} // Sentinel value for the HashMap-backed set implementation.
 
 // HashSet is an unordered collection type that uses HashMap as its underlying storage.
 //
@@ -56,8 +56,8 @@ var nothing struct{} // 用于HashMap的值部分，节省空间
 //  - For optimal performance, provide an efficient hash function implementation
 
 type HashSet[E any, H hashutil.Hasher[E]] struct {
-	table  *hashmap.HashMap[E, struct{}, H] // 底层哈希表存储结构
-	hasher H                                // 哈希器，用于元素的哈希计算和相等性比较
+	table  *hashmap.HashMap[E, struct{}, H] // Backing hash table storage.
+	hasher H                                // Hasher used for hashing and equality checks.
 }
 
 // New creates a new HashSet instance.
@@ -249,7 +249,7 @@ func (hs *HashSet[E, H]) Intersection(other *HashSet[E, H]) *HashSet[E, H] {
 	result := hs.Clone()
 	result.Clear()
 
-	// 优化：遍历较小的集合以提高效率
+	// Iterate over the smaller set to reduce lookup cost.
 	if hs.Len() > other.Len() {
 		hs, other = other, hs
 	}
@@ -306,14 +306,14 @@ func (hs *HashSet[E, H]) SymmetricDifference(other *HashSet[E, H]) *HashSet[E, H
 	result := hs.Clone()
 	result.Clear()
 
-	// 添加仅存在于当前集合中的元素
+	// Add elements that exist only in the current set.
 	for k := range hs.Iter() {
 		if !other.Contains(k) {
 			result.Insert(k)
 		}
 	}
 
-	// 添加仅存在于other集合中的元素
+	// Add elements that exist only in the other set.
 	for k := range other.Iter() {
 		if !hs.Contains(k) {
 			result.Insert(k)
@@ -381,7 +381,7 @@ func (hs *HashSet[E, H]) IsSuperset(other *HashSet[E, H]) bool {
 //
 // Time complexity: Average O(min(n, m)), where n and m are the sizes of the two sets
 func (hs *HashSet[E, H]) IsDisjoint(other *HashSet[E, H]) bool {
-	// 优化：检查较小的集合
+	// Check the smaller set first for better performance.
 	if hs.Len() > other.Len() {
 		hs, other = other, hs
 	}
@@ -393,4 +393,12 @@ func (hs *HashSet[E, H]) IsDisjoint(other *HashSet[E, H]) bool {
 	}
 
 	return true
+}
+
+// Equal checks if two sets contain exactly the same elements.
+func (hs *HashSet[E, H]) Equal(other *HashSet[E, H]) bool {
+	if hs.Len() != other.Len() {
+		return false
+	}
+	return hs.IsSubset(other)
 }

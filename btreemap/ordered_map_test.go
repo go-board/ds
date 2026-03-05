@@ -1,6 +1,7 @@
 package btreemap
 
 import (
+	"github.com/go-board/ds/bound"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestBTreeMapOrderedMapMethods(t *testing.T) {
 		lower := "b"
 		upper := "d"
 		count := 0
-		for k, vPtr := range m.RangeMut(&lower, &upper) {
+		for k, vPtr := range m.RangeMutAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 			count++
 			if k == "b" {
 				*vPtr = 20
@@ -43,31 +44,31 @@ func TestBTreeMapOrderedMapMethods(t *testing.T) {
 		}
 	})
 
-	// Test IterBack
-	t.Run("IterBack", func(t *testing.T) {
+	// Test IterDesc
+	t.Run("IterDesc", func(t *testing.T) {
 		expectedKeys := []string{"e", "d", "c", "b", "a"}
 		var actualKeys []string
-		for k, _ := range m.IterBack() {
+		for k, _ := range m.IterDesc() {
 			actualKeys = append(actualKeys, k)
 		}
 
 		if len(actualKeys) != len(expectedKeys) {
-			t.Errorf("Expected %d keys from IterBack, got %d", len(expectedKeys), len(actualKeys))
+			t.Errorf("Expected %d keys from IterDesc, got %d", len(expectedKeys), len(actualKeys))
 			return
 		}
 
 		for i, key := range expectedKeys {
 			if actualKeys[i] != key {
-				t.Errorf("IterBack: expected key %s at index %d, got %s", key, i, actualKeys[i])
+				t.Errorf("IterDesc: expected key %s at index %d, got %s", key, i, actualKeys[i])
 				return
 			}
 		}
 	})
 
-	// Test IterBackMut
-	t.Run("IterBackMut", func(t *testing.T) {
-		// Modify values using IterBackMut
-		for k, vPtr := range m.IterBackMut() {
+	// Test IterMutDesc
+	t.Run("IterMutDesc", func(t *testing.T) {
+		// Modify values using IterMutDesc
+		for k, vPtr := range m.IterMutDesc() {
 			if k == "e" {
 				*vPtr = 50
 			}
@@ -191,7 +192,7 @@ func TestBTreeMapEntryMethods(t *testing.T) {
 	// Test Insert
 	t.Run("EntryInsert", func(t *testing.T) {
 		entry := m.Entry("entryinsert")
-		entry.Insert(500)
+		_, _ = entry.Insert(500)
 		if val, found := m.Get("entryinsert"); !found || val != 500 {
 			t.Errorf("Expected Insert to set value to 500, got %d, found: %t", val, found)
 		}

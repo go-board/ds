@@ -1,6 +1,7 @@
 package btree
 
 import (
+	"github.com/go-board/ds/bound"
 	"reflect"
 	"testing"
 )
@@ -204,7 +205,7 @@ func TestIter(t *testing.T) {
 
 	// Collect iterator results
 	var result []int
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		result = append(result, v)
 	}
 
@@ -222,7 +223,7 @@ func TestIter(t *testing.T) {
 	// Test empty tree iterator
 	emptyTree := New(intComparator)
 	count := 0
-	for range emptyTree.Iter() {
+	for range emptyTree.IterAsc() {
 		count++
 	}
 	if count != 0 {
@@ -240,7 +241,7 @@ func TestRange(t *testing.T) {
 
 	// Test full range
 	var fullResult []int
-	for v := range tree.Range(nil, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
 		fullResult = append(fullResult, v)
 	}
 	expectedFull := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
@@ -251,7 +252,7 @@ func TestRange(t *testing.T) {
 	// Test lower bound range [3, ∞)
 	lowerBound := 3
 	var lowerResult []int
-	for v := range tree.Range(&lowerBound, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerBound), bound.NewUnbounded[int]())) {
 		lowerResult = append(lowerResult, v)
 	}
 	expectedLower := []int{3, 4, 5, 6, 7, 8, 9, 10}
@@ -262,7 +263,7 @@ func TestRange(t *testing.T) {
 	// Test upper bound range (-∞, 7]
 	upperBound := 7
 	var upperResult []int
-	for v := range tree.Range(nil, &upperBound) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewExcluded(upperBound))) {
 		upperResult = append(upperResult, v)
 	}
 	expectedUpper := []int{1, 2, 3, 4, 5, 6}
@@ -274,7 +275,7 @@ func TestRange(t *testing.T) {
 	low := 4
 	high := 8
 	var rangeResult []int
-	for v := range tree.Range(&low, &high) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(low), bound.NewExcluded(high))) {
 		rangeResult = append(rangeResult, v)
 	}
 	expectedRange := []int{4, 5, 6, 7}
@@ -286,7 +287,7 @@ func TestRange(t *testing.T) {
 	low2 := 8
 	high2 := 4
 	var emptyRangeResult []int
-	for v := range tree.Range(&low2, &high2) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(low2), bound.NewExcluded(high2))) {
 		emptyRangeResult = append(emptyRangeResult, v)
 	}
 	if len(emptyRangeResult) != 0 {
@@ -294,28 +295,28 @@ func TestRange(t *testing.T) {
 	}
 }
 
-// TestIterBack tests the IterBack method of BTree
-func TestIterBack(t *testing.T) {
+// TestIterDesc tests the IterDesc method of BTree.
+func TestIterDesc(t *testing.T) {
 	// Test with ordered integers
 	tree := NewOrdered[int]()
 
 	// Test empty tree
 	var emptyResult []int
-	for v := range tree.IterBack() {
+	for v := range tree.IterDesc() {
 		emptyResult = append(emptyResult, v)
 	}
 	if len(emptyResult) != 0 {
-		t.Errorf("IterBack on empty tree should return 0 elements, got %d", len(emptyResult))
+		t.Errorf("IterDesc on empty tree should return 0 elements, got %d", len(emptyResult))
 	}
 
 	// Test tree with a single element
 	tree.Insert(42)
 	var singleResult []int
-	for v := range tree.IterBack() {
+	for v := range tree.IterDesc() {
 		singleResult = append(singleResult, v)
 	}
 	if len(singleResult) != 1 || singleResult[0] != 42 {
-		t.Errorf("IterBack on single element tree should return [42], got %v", singleResult)
+		t.Errorf("IterDesc on single element tree should return [42], got %v", singleResult)
 	}
 
 	// Clear tree for next test
@@ -327,22 +328,22 @@ func TestIterBack(t *testing.T) {
 		tree.Insert(v)
 	}
 
-	// Collect results from IterBack
+	// Collect results from IterDesc.
 	var reverseResults []int
-	for v := range tree.IterBack() {
+	for v := range tree.IterDesc() {
 		reverseResults = append(reverseResults, v)
 	}
 
 	// Expected result should be sorted in descending order
 	expectedReverse := []int{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}
 	if !reflect.DeepEqual(reverseResults, expectedReverse) {
-		t.Errorf("IterBack should return elements in descending order, got %v, expected %v", reverseResults, expectedReverse)
+		t.Errorf("IterDesc should return elements in descending order, got %v, expected %v", reverseResults, expectedReverse)
 	}
 
-	// Test IterBack with early termination
+	// Test IterDesc with early termination.
 	count := 0
 	var partialResults []int
-	for v := range tree.IterBack() {
+	for v := range tree.IterDesc() {
 		partialResults = append(partialResults, v)
 		count++
 		if count == 5 {
@@ -351,12 +352,12 @@ func TestIterBack(t *testing.T) {
 	}
 
 	if count != 5 {
-		t.Errorf("IterBack iteration should yield 5 elements before break, got %d", count)
+		t.Errorf("IterDesc iteration should yield 5 elements before break, got %d", count)
 	}
 
 	expectedPartial := []int{10, 9, 8, 7, 6}
 	if !reflect.DeepEqual(partialResults, expectedPartial) {
-		t.Errorf("Early terminated IterBack should return top 5 elements, got %v, expected %v", partialResults, expectedPartial)
+		t.Errorf("Early terminated IterDesc should return top 5 elements, got %v, expected %v", partialResults, expectedPartial)
 	}
 
 	// Verify the tree structure is not damaged
@@ -501,7 +502,7 @@ func TestCustomType(t *testing.T) {
 
 	// Test iterator
 	var ages []int
-	for p := range tree.Iter() {
+	for p := range tree.IterAsc() {
 		ages = append(ages, p.Age)
 	}
 	expectedAges := []int{25, 28, 30, 35}
@@ -575,7 +576,7 @@ func TestComplexOperations(t *testing.T) {
 	// Verify all elements using iterator
 	count := 0
 	prev := -1
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		count++
 		if v <= prev {
 			t.Errorf("Elements should be in order, previous %d, current %d", prev, v)
@@ -626,7 +627,7 @@ func TestGetSuccessor(t *testing.T) {
 
 	// Verify the tree maintains correct ordering
 	prev := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		if v <= prev {
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
 		}
@@ -691,7 +692,6 @@ func TestBorrowFromRight(t *testing.T) {
 		tree.Insert(v)
 	}
 
-	// 删除特定元素以触发borrowFromRight操作
 	// Delete elements from the left subtree to make the number of keys insufficient, requiring borrowing from the right sibling
 	toRemove := []int{1, 2, 3, 4, 5, 6}
 	for _, v := range toRemove {
@@ -732,13 +732,11 @@ func TestBorrowFromRight(t *testing.T) {
 func TestMergeChildren(t *testing.T) {
 	tree := New(intComparator)
 
-	// 插入数据以创建特定的树结构
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 	for _, v := range values {
 		tree.Insert(v)
 	}
 
-	// 删除特定元素以触发mergeChildren操作
 	// Delete most elements to reduce the number of keys in child nodes below the merge threshold
 	toRemove := []int{4, 5, 6, 7, 8, 9, 10, 11, 12}
 	for _, v := range toRemove {
@@ -748,7 +746,6 @@ func TestMergeChildren(t *testing.T) {
 		}
 	}
 
-	// 验证删除后树仍然正确
 	for _, v := range values {
 		found := false
 		for _, removed := range toRemove {
@@ -781,7 +778,7 @@ func TestRangeNodeEdgeCases(t *testing.T) {
 
 	// Test range query on empty tree
 	var result []int
-	for v := range tree.Range(nil, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
 		result = append(result, v)
 	}
 	if len(result) != 0 {
@@ -793,7 +790,7 @@ func TestRangeNodeEdgeCases(t *testing.T) {
 
 	// Test range query on single-element tree
 	result = result[:0] // Clear the slice
-	for v := range tree.Range(nil, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
 		result = append(result, v)
 	}
 	if len(result) != 1 || result[0] != 5 {
@@ -804,7 +801,7 @@ func TestRangeNodeEdgeCases(t *testing.T) {
 	low := 5
 	high := 5
 	result = result[:0]
-	for v := range tree.Range(&low, &high) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(low), bound.NewExcluded(high))) {
 		result = append(result, v)
 	}
 	if len(result) != 0 {
@@ -815,7 +812,7 @@ func TestRangeNodeEdgeCases(t *testing.T) {
 	low = 4
 	high = 6
 	result = result[:0]
-	for v := range tree.Range(&low, &high) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(low), bound.NewExcluded(high))) {
 		result = append(result, v)
 	}
 	if len(result) != 1 || result[0] != 5 {
@@ -844,7 +841,6 @@ func TestGetSuccessorSpecifically(t *testing.T) {
 		t.Error("Should be able to remove value 7")
 	}
 
-	// 验证删除后树仍然正确
 	_, found := tree.Search(7)
 	if found {
 		t.Error("Value 7 should have been removed")
@@ -865,7 +861,7 @@ func TestGetSuccessorSpecifically(t *testing.T) {
 
 	// Verify the tree still maintains correct order
 	prev := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		if v <= prev {
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
 		}
@@ -936,7 +932,6 @@ func TestBorrowFromLeftSpecifically(t *testing.T) {
 func TestRangeNodeFullCoverage(t *testing.T) {
 	tree := New(intComparator)
 
-	// 插入数据
 	values := []int{1, 3, 5, 7, 9, 11, 13, 15, 17, 19}
 	for _, v := range values {
 		tree.Insert(v)
@@ -946,7 +941,7 @@ func TestRangeNodeFullCoverage(t *testing.T) {
 
 	// Test nil boundaries
 	var result []int
-	for v := range tree.Range(nil, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
 		result = append(result, v)
 	}
 	expected := []int{1, 3, 5, 7, 9, 11, 13, 15, 17, 19}
@@ -962,7 +957,7 @@ func TestRangeNodeFullCoverage(t *testing.T) {
 	// Test only lower bound
 	lower := 7
 	result = result[:0]
-	for v := range tree.Range(&lower, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewUnbounded[int]())) {
 		result = append(result, v)
 	}
 	expected = []int{7, 9, 11, 13, 15, 17, 19}
@@ -978,7 +973,7 @@ func TestRangeNodeFullCoverage(t *testing.T) {
 	// Test only upper bound
 	upper := 11
 	result = result[:0]
-	for v := range tree.Range(nil, &upper) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewExcluded(upper))) {
 		result = append(result, v)
 	}
 	expected = []int{1, 3, 5, 7, 9}
@@ -995,7 +990,7 @@ func TestRangeNodeFullCoverage(t *testing.T) {
 	lower = 5
 	upper = 15
 	result = result[:0]
-	for v := range tree.Range(&lower, &upper) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		result = append(result, v)
 	}
 	expected = []int{5, 7, 9, 11, 13}
@@ -1012,7 +1007,7 @@ func TestRangeNodeFullCoverage(t *testing.T) {
 	lower = 15
 	upper = 5
 	result = result[:0]
-	for v := range tree.Range(&lower, &upper) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		result = append(result, v)
 	}
 	if len(result) != 0 {
@@ -1030,7 +1025,6 @@ func TestEnsureGetSuccessorCalled(t *testing.T) {
 	// 2. The number of keys in the left subtree < order (i.e., < 3)
 	// 3. The number of keys in the right subtree >= order (i.e., >= 3)
 
-	// 插入数据以创建特定的树结构
 	// First insert some data to create splits
 	for i := 1; i <= 15; i++ {
 		tree.Insert(i)
@@ -1070,7 +1064,7 @@ func TestEnsureGetSuccessorCalled(t *testing.T) {
 
 	// Verify iteration still works in order
 	prev := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		if v <= prev && v != 100 { // 100 is newly inserted and might be at the end
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
 		}
@@ -1092,7 +1086,7 @@ func TestRangeNodeMoreBranches(t *testing.T) {
 	// Test cases triggered by upper bound
 	upper := 25
 	var result []int
-	for v := range tree.Range(nil, &upper) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewExcluded(upper))) {
 		result = append(result, v)
 		// Terminate early at a certain point to test the case where yield returns false
 		if len(result) == 10 {
@@ -1117,19 +1111,17 @@ func TestRangeNodeMoreBranches(t *testing.T) {
 	// Test cases with both lower and upper bounds
 	lower := 15
 	upperBound := 35
-	result = result[:0] // 清空切片
-	for v := range tree.Range(&lower, &upperBound) {
+	result = result[:0]
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upperBound))) {
 		result = append(result, v)
 	}
 
-	// 验证结果在正确范围内
 	for _, v := range result {
 		if v < lower || v >= upperBound {
 			t.Errorf("Element %d should be in range [%d, %d)", v, lower, upperBound)
 		}
 	}
 
-	// 验证元素顺序正确
 	for i := 0; i < len(result)-1; i++ {
 		if result[i] >= result[i+1] {
 			t.Errorf("Elements should be in ascending order, got %d >= %d at positions %d and %d",
@@ -1161,7 +1153,6 @@ func TestDeleteNodeBorrowFromLeft(t *testing.T) {
 		t.Error("Should be able to remove value 1")
 	}
 
-	// 验证删除后树仍然正确
 	_, found := tree.Search(1)
 	if found {
 		t.Error("Value 1 should have been removed")
@@ -1201,7 +1192,6 @@ func TestDeleteNodeBorrowFromLeft(t *testing.T) {
 func TestComplexRangeQueries(t *testing.T) {
 	tree := New(intComparator)
 
-	// 插入数据
 	for i := 1; i <= 30; i++ {
 		tree.Insert(i)
 	}
@@ -1211,7 +1201,7 @@ func TestComplexRangeQueries(t *testing.T) {
 	// Test case where upper bound equals a key
 	upperBound := 15
 	var result []int
-	for v := range tree.Range(nil, &upperBound) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewExcluded(upperBound))) {
 		result = append(result, v)
 	}
 
@@ -1225,7 +1215,7 @@ func TestComplexRangeQueries(t *testing.T) {
 	// Test case where lower bound equals a key
 	lowerBound := 10
 	result = result[:0]
-	for v := range tree.Range(&lowerBound, nil) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerBound), bound.NewUnbounded[int]())) {
 		result = append(result, v)
 	}
 
@@ -1245,7 +1235,7 @@ func TestComplexRangeQueries(t *testing.T) {
 	lower := 20
 	upper := 10
 	result = result[:0]
-	for v := range tree.Range(&lower, &upper) {
+	for v := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		result = append(result, v)
 	}
 	if len(result) != 0 {
@@ -1257,7 +1247,6 @@ func TestComplexRangeQueries(t *testing.T) {
 func TestRangeNodeEarlyTermination(t *testing.T) {
 	tree := New(intComparator)
 
-	// 插入数据
 	for i := 1; i <= 20; i++ {
 		tree.Insert(i)
 	}
@@ -1265,7 +1254,7 @@ func TestRangeNodeEarlyTermination(t *testing.T) {
 	// Test case where yield returns false in rangeNode
 	// This triggers the return false branch in rangeNode function
 	count := 0
-	for range tree.Range(nil, nil) {
+	for range tree.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
 		count++
 		if count == 5 {
 			break // Terminate iteration early
@@ -1354,7 +1343,6 @@ func TestBorrowFromLeftMoreBranches(t *testing.T) {
 		t.Error("Value 1 should have been removed")
 	}
 
-	// 验证其他元素仍然存在
 	for _, v := range values {
 		shouldExist := true
 		for _, removed := range toRemoveFromRight {
@@ -1394,7 +1382,6 @@ func TestGetSuccessorAllLines(t *testing.T) {
 		tree.Insert(i)
 	}
 
-	// 删除一些键以调整树结构
 	toRemove := []int{1, 2, 3, 98, 99, 100}
 	for _, v := range toRemove {
 		tree.Remove(v)
@@ -1413,7 +1400,6 @@ func TestGetSuccessorAllLines(t *testing.T) {
 		t.Error("Value 50 should have been removed")
 	}
 
-	// 验证其他元素仍然存在
 	for i := 4; i <= 97; i++ {
 		if i != 50 {
 			val, exists := tree.Search(i)
@@ -1442,7 +1428,6 @@ func TestGetSuccessorLoopExecution(t *testing.T) {
 		tree.Insert(v)
 	}
 
-	// 验证要删除的键存在
 	val, found := tree.Search(25)
 	if !found || val != 25 {
 		t.Error("Value 25 should exist in the tree")
@@ -1461,7 +1446,6 @@ func TestGetSuccessorLoopExecution(t *testing.T) {
 		t.Error("Value 25 should have been removed")
 	}
 
-	// 验证其他元素仍然存在
 	for _, v := range values {
 		if v != 25 {
 			val, exists := tree.Search(v)
@@ -1476,7 +1460,7 @@ func TestGetSuccessorLoopExecution(t *testing.T) {
 
 	// Verify the tree order is still correct
 	prev := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		if v <= prev {
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
 		}
@@ -1513,7 +1497,6 @@ func TestGetSuccessorFullLoopExecution(t *testing.T) {
 		t.Error("Value 25 should have been removed")
 	}
 
-	// 验证其他元素仍然存在
 	for i := 4; i <= 97; i++ {
 		if i != 25 && i != 50 {
 			val, exists := tree.Search(i)
@@ -1531,13 +1514,11 @@ func TestGetSuccessorFullLoopExecution(t *testing.T) {
 func TestGetSuccessorLoopExecutionSpecific(t *testing.T) {
 	tree := New(intComparator)
 
-	// 插入大量数据以创建多层的B树结构
 	// This ensures the for loop in getSuccessor function will be executed
 	for i := 1; i <= 200; i++ {
 		tree.Insert(i)
 	}
 
-	// 删除一些键以调整树结构
 	for i := 1; i <= 50; i++ {
 		tree.Remove(i)
 	}
@@ -1545,7 +1526,6 @@ func TestGetSuccessorLoopExecutionSpecific(t *testing.T) {
 		tree.Remove(i)
 	}
 
-	// 现在删除一个内部节点中的键，这应该会触发getSuccessor的调用
 	// Especially to ensure the for loop is executed multiple times
 	removed := tree.Remove(100)
 	if !removed {
@@ -1560,7 +1540,7 @@ func TestGetSuccessorLoopExecutionSpecific(t *testing.T) {
 
 	// Verify the tree still maintains correct order
 	prev := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		if v <= prev {
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
 		}
@@ -1572,7 +1552,6 @@ func TestGetSuccessorLoopExecutionSpecific(t *testing.T) {
 func TestGetSuccessorFullLoopCoverage(t *testing.T) {
 	tree := New(intComparator)
 
-	// 插入大量数据以创建多层的B树结构
 	// Use a specific insertion order to create a complex internal node structure
 	values := make([]int, 0)
 	for i := 1; i <= 300; i++ {
@@ -1591,7 +1570,6 @@ func TestGetSuccessorFullLoopCoverage(t *testing.T) {
 		}
 	}
 
-	// 验证所有元素都已插入
 	if tree.Len() != 300 {
 		t.Errorf("Tree should have 300 elements, got %d", tree.Len())
 	}
@@ -1606,7 +1584,6 @@ func TestGetSuccessorFullLoopCoverage(t *testing.T) {
 		}
 	}
 
-	// 验证删除操作成功执行
 	for _, v := range toRemove {
 		_, found := tree.Search(v)
 		if found {
@@ -1623,7 +1600,7 @@ func TestGetSuccessorFullLoopCoverage(t *testing.T) {
 	// Verify the tree still maintains correct order
 	prev := 0
 	count := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		count++
 		if v <= prev {
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
@@ -1645,26 +1622,21 @@ func TestGetSuccessorAllBranches(t *testing.T) {
 		tree.Insert(i)
 	}
 
-	// 删除一些元素以调整树结构
 	toRemove := []int{1, 2, 3, 48, 49, 50}
 	for _, v := range toRemove {
 		tree.Remove(v)
 	}
 
-	// 现在删除一个内部节点中的键，这应该会触发getSuccessor的调用
-	// 并且确保for循环被执行（即node.isLeaf为false的情况）
 	removed := tree.Remove(25)
 	if !removed {
 		t.Error("Should be able to remove value 25")
 	}
 
-	// 验证删除操作成功执行
 	_, found := tree.Search(25)
 	if found {
 		t.Error("Value 25 should have been removed")
 	}
 
-	// 验证其他元素仍然存在
 	for i := 5; i <= 47; i++ {
 		if i != 25 {
 			val, exists := tree.Search(i)
@@ -1679,7 +1651,7 @@ func TestGetSuccessorAllBranches(t *testing.T) {
 
 	// Verify the tree still maintains correct order
 	prev := 0
-	for v := range tree.Iter() {
+	for v := range tree.IterAsc() {
 		if v <= prev {
 			t.Errorf("Elements should be in ascending order, got %d after %d", v, prev)
 		}

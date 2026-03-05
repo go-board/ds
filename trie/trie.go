@@ -154,56 +154,52 @@ func (m *TrieMap[K, V]) GetMut(key []K) *V {
 //
 // Time complexity: O(L), where L is the length of the key
 func (m *TrieMap[K, V]) Insert(key []K, value V) bool {
-	// Special case for empty key
+	_, existed := m.Entry(key).Insert(value)
+	return !existed
+}
+
+func (m *TrieMap[K, V]) insert(key []K, value V) (V, bool) {
+	var zero V
 	if len(key) == 0 {
-		if !m.root.hasValue {
-			m.root.hasValue = true
-			m.size++
+		if m.root.hasValue {
+			old := m.root.value
+			m.root.value = value
+			return old, true
 		}
+		m.root.hasValue = true
 		m.root.value = value
-		return !m.root.hasValue // Return true if it was a new insertion
+		m.size++
+		return zero, false
 	}
 
 	current := m.root
-
-	for i, k := range key {
-		// Search for the child with the current key element
-		found := false
+	for _, k := range key {
+		var next *node[K, V]
 		for _, child := range current.children {
 			if m.comparator(child.key, k) == 0 {
-				current = child
-				found = true
+				next = child
 				break
 			}
 		}
-
-		if !found {
-			// Create a new node for this key element
-			newChild := newNode[K, V]()
-			newChild.key = k
-			current.children = append(current.children, newChild)
+		if next == nil {
+			next = newNode[K, V]()
+			next.key = k
+			current.children = append(current.children, next)
 			current.isLeaf = false
-			current = newChild
 		}
-
-		// If we've reached the end of the key, set the value
-		if i == len(key)-1 {
-			if !current.hasValue {
-				m.size++
-			}
-			current.value = value
-			current.hasValue = true
-			return !current.hasValue // Return true if it was a new insertion
-		}
+		current = next
 	}
 
-	// This should not be reachable due to the check at the end of the key
-	if !current.hasValue {
-		m.size++
+	if current.hasValue {
+		old := current.value
+		current.value = value
+		return old, true
 	}
+
 	current.value = value
 	current.hasValue = true
-	return !current.hasValue
+	m.size++
+	return zero, false
 }
 
 // Remove removes a key-value pair from the trie.

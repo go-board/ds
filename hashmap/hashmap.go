@@ -270,53 +270,11 @@ func (hm *HashMap[K, V, H]) ContainsKey(key K) bool {
 // Average time complexity: O(1)
 // Note: When there are many deleted nodes in the hash map, compression is automatically triggered.
 func (hm *HashMap[K, V, H]) Insert(key K, value V) (V, bool) {
-	// For map implementation, pre-allocation and resizing are no longer needed
-	// The system automatically manages map growth
-
-	// Automatically trigger compression when there are many deleted nodes
+	// Automatically trigger compression when there are many deleted nodes.
 	if hm.deletedCount > hm.size {
 		hm.Compact()
 	}
-
-	hash := hm.hash(key)
-	bucket := hm.getBucket(hash)
-	var oldValue V
-	var hadValue bool
-
-	// Check if key already exists
-	for i, node := range bucket.nodes {
-		if !node.deleted && hm.hasher.Equal(node.key, key) {
-			// Update the value of an existing undeleted node
-			oldValue = node.value
-			bucket.nodes[i].value = value
-			hadValue = true
-			return oldValue, hadValue
-		}
-	}
-
-	// Find if there are deleted nodes that can be reused
-	for _, node := range bucket.nodes {
-		if node.deleted && hm.hasher.Equal(node.key, key) {
-			// Reuse deleted node
-			oldValue = node.value
-			node.deleted = false
-			node.value = value
-			hadValue = true
-			hm.size++
-			hm.deletedCount--
-			return oldValue, hadValue
-		}
-	}
-
-	// Add new node
-	bucket.nodes = append(bucket.nodes, &node[K, V]{
-		key:     key,
-		value:   value,
-		deleted: false,
-	})
-
-	hm.size++
-	return oldValue, hadValue
+	return hm.Entry(key).Insert(value)
 }
 
 // Remove softly deletes the key-value pair with the specified key.

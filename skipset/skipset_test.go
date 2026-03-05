@@ -2,6 +2,7 @@ package skipset
 
 import (
 	"fmt"
+	"github.com/go-board/ds/bound"
 	"math/rand"
 	"sort"
 	"testing"
@@ -106,27 +107,27 @@ func TestSkipSetIterator(t *testing.T) {
 		ss.Insert(item)
 	}
 
-	// Test Iter()
+	// Test IterAsc()
 	iterData := make([]string, 0)
-	for val := range ss.Iter() {
+	for val := range ss.IterAsc() {
 		iterData = append(iterData, val)
 	}
 
 	// Verify iteration order
 	sort.Strings(data) // Ensure data is sorted
 	if len(iterData) != len(data) {
-		t.Errorf("Iter() returned wrong number of items: expected %d, got %d", len(data), len(iterData))
+		t.Errorf("IterAsc() returned wrong number of items: expected %d, got %d", len(data), len(iterData))
 	} else {
 		for i, val := range iterData {
 			if val != data[i] {
-				t.Errorf("Iter() returned wrong value at index %d: expected %s, got %s", i, data[i], val)
+				t.Errorf("IterAsc() returned wrong value at index %d: expected %s, got %s", i, data[i], val)
 			}
 		}
 	}
 }
 
 // Test range query functionality
-func TestSkipSetRange(t *testing.T) {
+func TestSkipSetRangeAsc(t *testing.T) {
 	ss := NewOrdered[string]()
 
 	// Insert some elements
@@ -137,12 +138,12 @@ func TestSkipSetRange(t *testing.T) {
 
 	// Test full range [nil, nil)
 	fullRange := make([]string, 0)
-	for val := range ss.Range(nil, nil) {
+	for val := range ss.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewUnbounded[string]())) {
 		fullRange = append(fullRange, val)
 	}
 
 	if len(fullRange) != len(data) {
-		t.Errorf("Range(nil, nil) returned wrong number of items: expected %d, got %d", len(data), len(fullRange))
+		t.Errorf("RangeAsc(nil, nil) returned wrong number of items: expected %d, got %d", len(data), len(fullRange))
 	}
 
 	// Test left-closed right-open range ["b", "f")
@@ -150,16 +151,16 @@ func TestSkipSetRange(t *testing.T) {
 	upperB := "f"
 	expected := []string{"b", "c", "d", "e"}
 	rangeData := make([]string, 0)
-	for val := range ss.Range(&lowerB, &upperB) {
+	for val := range ss.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerB), bound.NewExcluded(upperB))) {
 		rangeData = append(rangeData, val)
 	}
 
 	if len(rangeData) != len(expected) {
-		t.Errorf("Range(\"b\", \"f\") returned wrong number of items: expected %d, got %d", len(expected), len(rangeData))
+		t.Errorf("RangeAsc(\"b\", \"f\") returned wrong number of items: expected %d, got %d", len(expected), len(rangeData))
 	} else {
 		for i, val := range rangeData {
 			if val != expected[i] {
-				t.Errorf("Range(\"b\", \"f\") returned wrong value at index %d: expected %s, got %s", i, expected[i], val)
+				t.Errorf("RangeAsc(\"b\", \"f\") returned wrong value at index %d: expected %s, got %s", i, expected[i], val)
 			}
 		}
 	}
@@ -168,24 +169,24 @@ func TestSkipSetRange(t *testing.T) {
 	lowerD := "d"
 	expectedLower := []string{"d", "e", "f", "g"}
 	lowerRange := make([]string, 0)
-	for val := range ss.Range(&lowerD, nil) {
+	for val := range ss.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerD), bound.NewUnbounded[string]())) {
 		lowerRange = append(lowerRange, val)
 	}
 
 	if len(lowerRange) != len(expectedLower) {
-		t.Errorf("Range(\"d\", nil) returned wrong number of items: expected %d, got %d", len(expectedLower), len(lowerRange))
+		t.Errorf("RangeAsc(\"d\", nil) returned wrong number of items: expected %d, got %d", len(expectedLower), len(lowerRange))
 	}
 
 	// Test only upper bound [nil, "c")
 	upperC := "c"
 	expectedUpper := []string{"a", "b"}
 	upperRange := make([]string, 0)
-	for val := range ss.Range(nil, &upperC) {
+	for val := range ss.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewExcluded(upperC))) {
 		upperRange = append(upperRange, val)
 	}
 
 	if len(upperRange) != len(expectedUpper) {
-		t.Errorf("Range(nil, \"c\") returned wrong number of items: expected %d, got %d", len(expectedUpper), len(upperRange))
+		t.Errorf("RangeAsc(nil, \"c\") returned wrong number of items: expected %d, got %d", len(expectedUpper), len(upperRange))
 	}
 }
 
@@ -615,7 +616,7 @@ func TestSkipSetCustomComparator(t *testing.T) {
 
 	// Verify ordering is by length
 	values := make([]string, 0)
-	for val := range ss.Iter() {
+	for val := range ss.IterAsc() {
 		values = append(values, val)
 	}
 
@@ -692,7 +693,7 @@ func TestSkipSetCustomElementType(t *testing.T) {
 
 	// Test iteration order (should be by age)
 	ages := make([]int, 0)
-	for p := range ss.Iter() {
+	for p := range ss.IterAsc() {
 		ages = append(ages, p.Age)
 	}
 
@@ -737,7 +738,7 @@ func TestSkipSetLargeLoad(t *testing.T) {
 
 	// Test iteration order (should be sorted by elements)
 	elements := make([]int, 0, len(data))
-	for val := range ss.Iter() {
+	for val := range ss.IterAsc() {
 		elements = append(elements, val)
 	}
 
@@ -788,7 +789,7 @@ func TestSkipSetModifyDuringIteration(t *testing.T) {
 
 	// Delete some elements during iteration
 	toDelete := []string{"item2", "item5", "item8"}
-	for val := range ss.Iter() {
+	for val := range ss.IterAsc() {
 		for _, delVal := range toDelete {
 			if val == delVal {
 				ss.Remove(val)
@@ -827,7 +828,7 @@ func TestSkipSetRangeAllBranches(t *testing.T) {
 	lower := "f"
 	upper := "b"
 	rangeData := make([]string, 0)
-	for val := range ss.Range(&lower, &upper) {
+	for val := range ss.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		rangeData = append(rangeData, val)
 	}
 	if len(rangeData) != 0 {
@@ -838,7 +839,7 @@ func TestSkipSetRangeAllBranches(t *testing.T) {
 	lower = "c"
 	upper = "f"
 	rangeData = make([]string, 0)
-	for val := range ss.Range(&lower, &upper) {
+	for val := range ss.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 		rangeData = append(rangeData, val)
 	}
 	expected := []string{"c", "d", "e"}
@@ -853,7 +854,7 @@ func TestSkipSetRangeAllBranches(t *testing.T) {
 
 	// Test iterator early termination
 	count := 0
-	for range ss.Range(nil, nil) {
+	for range ss.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[string](), bound.NewUnbounded[string]())) {
 		count++
 		if count == 3 {
 			break
@@ -892,7 +893,7 @@ func TestSkipSetIntersectionAllBranches(t *testing.T) {
 	intersection := set1.Intersection(set2)
 	expected := []string{"c", "d", "e"}
 	result := make([]string, 0)
-	for val := range intersection.Iter() {
+	for val := range intersection.IterAsc() {
 		result = append(result, val)
 	}
 	if len(result) != len(expected) {

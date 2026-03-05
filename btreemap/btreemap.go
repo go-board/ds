@@ -22,7 +22,7 @@
 //	}
 //
 //	// Iterate through all key-value pairs (sorted by key)
-//	for k, v := range m.Iter() {
+//	for k, v := range m.IterAsc() {
 //		fmt.Printf("%s: %d\n", k, v)
 //	}
 package btreemap
@@ -112,25 +112,21 @@ func NewFromMap[K cmp.Ordered, V any, M ~map[K]V](m M) *BTreeMap[K, V] {
 //
 // Time Complexity: O(log n)
 func (m *BTreeMap[K, V]) Insert(key K, value V) (V, bool) {
-	// search for existing entry
+	return m.Entry(key).Insert(value)
+}
+
+func (m *BTreeMap[K, V]) insert(key K, value V) (V, bool) {
 	targetEntry := &node[K, V]{Key: key}
 	existingEntry, found := m.btree.Search(targetEntry)
-	var oldValue V
-
-	// if found, save the old value and update in-place
 	if found {
-		oldValue = existingEntry.Value
-		// update the existing value directly to avoid remove+insert
+		oldValue := existingEntry.Value
 		existingEntry.Value = value
 		return oldValue, true
 	}
 
-	// insert new entry
-	newEntry := &node[K, V]{Key: key, Value: value}
-	m.btree.Insert(newEntry)
-
-	// return zero value and false to indicate a new insertion
-	return oldValue, false
+	var zero V
+	m.btree.Insert(&node[K, V]{Key: key, Value: value})
+	return zero, false
 }
 
 // Get retrieves the value associated with the specified key.
@@ -287,7 +283,7 @@ func (m *BTreeMap[K, V]) Clone() *BTreeMap[K, V] {
 	clone := New[K, V](m.comparator)
 
 	// copy all key-value pairs
-	for k, v := range m.Iter() {
+	for k, v := range m.IterAsc() {
 		clone.Insert(k, v)
 	}
 
@@ -350,4 +346,9 @@ func (m *BTreeMap[K, V]) PopLast() (k K, v V, found bool) {
 		return
 	}
 	return n.Key, n.Value, true
+}
+
+// GetComparator returns the key comparison function used by the map.
+func (m *BTreeMap[K, V]) GetComparator() func(K, K) int {
+	return m.comparator
 }

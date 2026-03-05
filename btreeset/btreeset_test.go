@@ -1,6 +1,7 @@
 package btreeset
 
 import (
+	"github.com/go-board/ds/bound"
 	"testing"
 )
 
@@ -73,7 +74,7 @@ func TestBTreeSetEmpty(t *testing.T) {
 
 	// Test empty set iterator
 	iterCount := 0
-	for range set.Iter() {
+	for range set.IterAsc() {
 		iterCount++
 	}
 	if iterCount != 0 {
@@ -117,7 +118,7 @@ func TestBTreeSetClear(t *testing.T) {
 }
 
 // Test iterator
-func TestBTreeSetIter(t *testing.T) {
+func TestBTreeSetIterAsc(t *testing.T) {
 	set := New(intComparator)
 
 	// Add elements (added out of order, but should iterate in ascending order)
@@ -131,7 +132,7 @@ func TestBTreeSetIter(t *testing.T) {
 	expectedOrder := []int{1, 2, 3, 5, 7}
 	actualOrder := make([]int, 0, 5)
 
-	for val := range set.Iter() {
+	for val := range set.IterAsc() {
 		actualOrder = append(actualOrder, val)
 	}
 
@@ -358,7 +359,7 @@ func TestBTreeSetPopFirstLast(t *testing.T) {
 }
 
 // Test Range method
-func TestBTreeSetRange(t *testing.T) {
+func TestBTreeSetRangeAsc(t *testing.T) {
 	set := New(intComparator)
 
 	// Add elements
@@ -367,7 +368,7 @@ func TestBTreeSetRange(t *testing.T) {
 	}
 
 	// Test full range
-	range1 := set.Range(nil, nil)
+	range1 := set.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]()))
 	count1 := 0
 	for range range1 {
 		count1++
@@ -379,7 +380,7 @@ func TestBTreeSetRange(t *testing.T) {
 	// Test with upper and lower bounds
 	lower3 := 3
 	upper7 := 7
-	range2 := set.Range(&lower3, &upper7)
+	range2 := set.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower3), bound.NewExcluded(upper7)))
 	values2 := make([]int, 0)
 	for val := range range2 {
 		values2 = append(values2, val)
@@ -396,7 +397,7 @@ func TestBTreeSetRange(t *testing.T) {
 
 	// Test with only lower bound
 	lower8 := 8
-	range3 := set.Range(&lower8, nil)
+	range3 := set.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower8), bound.NewUnbounded[int]()))
 	values3 := make([]int, 0)
 	for val := range range3 {
 		values3 = append(values3, val)
@@ -413,7 +414,7 @@ func TestBTreeSetRange(t *testing.T) {
 
 	// Test with only upper bound
 	upper4 := 4
-	range4 := set.Range(nil, &upper4)
+	range4 := set.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewExcluded(upper4)))
 	values4 := make([]int, 0)
 	for val := range range4 {
 		values4 = append(values4, val)
@@ -430,7 +431,7 @@ func TestBTreeSetRange(t *testing.T) {
 
 	// Test with no matching elements
 	lower11 := 11
-	range5 := set.Range(&lower11, nil)
+	range5 := set.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower11), bound.NewUnbounded[int]()))
 	count5 := 0
 	for range range5 {
 		count5++
@@ -457,7 +458,7 @@ func verifySetContent[T comparable](t *testing.T, set *BTreeSet[T], expected []T
 
 	// Collect elements from the set
 	actual := make([]T, 0, set.Len())
-	for val := range set.Iter() {
+	for val := range set.IterAsc() {
 		actual = append(actual, val)
 	}
 
@@ -472,5 +473,30 @@ func verifySetContent[T comparable](t *testing.T, set *BTreeSet[T], expected []T
 		if actual[i] != expected[i] {
 			t.Errorf("%s: at index %d, expected %v, got %v", operation, i, expected[i], actual[i])
 		}
+	}
+}
+
+func TestBTreeSetEqual(t *testing.T) {
+	a := New(intComparator)
+	b := New(intComparator)
+	for _, v := range []int{1, 2, 3} {
+		a.Insert(v)
+		b.Insert(v)
+	}
+	if !a.Equal(b) {
+		t.Fatal("sets with same elements should be equal")
+	}
+
+	b.Insert(4)
+	if a.Equal(b) {
+		t.Fatal("sets with different sizes should not be equal")
+	}
+
+	c := New(intComparator)
+	for _, v := range []int{1, 2, 4} {
+		c.Insert(v)
+	}
+	if a.Equal(c) {
+		t.Fatal("sets with same size but different elements should not be equal")
 	}
 }

@@ -1,23 +1,24 @@
-# go-board/ds
+# ds
 
-<div align="center">
+[![Go Version](https://img.shields.io/badge/go-%3E%3D1.24-00ADD8?logo=go)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-A comprehensive, high-performance generic data structures library for Go 1.24+
+`github.com/go-board/ds` is a generic data-structures library for modern Go.
+It provides consistent APIs for maps, sets, trees, linear containers, and iterators,
+with explicit ordered traversal and composable range bounds.
 
-</div>
+---
 
-## Overview
+## Why this project
 
-**go-board/ds** is a feature-rich data structures library for Go that leverages the power of Go 1.24's generics to provide type-safe, efficient implementations of common and advanced data structures. This library is designed to be both performant and developer-friendly, with a consistent API design across all implementations.
+- **Generic-first design** (Go 1.24+)
+- **Consistent API style** across related data structures
+- **Ordered & unordered variants** for map/set workloads
+- **Explicit iteration direction** (`IterAsc` / `IterDesc`)
+- **Composable range model** via `bound.RangeBounds`
+- **Rust-inspired Entry workflows** for map updates
 
-## Features
-
-- **Full Generic Support**: Leverage Go 1.24 generics for type-safe data structures
-- **Comprehensive Data Structure Collection**: Linked lists, deques, maps, sets, priority queues, and more
-- **Performance-Optimized Implementations**: Each data structure is carefully optimized for its specific use cases
-- **Consistent API Design**: Familiar interfaces across all data structures
-- **Flexible Hashing Strategies**: Customizable hashers for any type
-- **Complete Iterator Support**: Multiple iteration patterns for easy data processing
+---
 
 ## Installation
 
@@ -25,9 +26,27 @@ A comprehensive, high-performance generic data structures library for Go 1.24+
 go get github.com/go-board/ds
 ```
 
-## Quick Start
+## Requirements
 
-Here's a simple example demonstrating some of the library's capabilities:
+- Go **1.24** or newer
+
+---
+
+## Package overview
+
+| Category | Implementations |
+|---|---|
+| Linear containers | `ArrayDeque`, `ArrayStack`, `LinkedList` |
+| Heap/queue | `PriorityQueue` |
+| Unordered map/set | `HashMap`, `HashSet` |
+| Ordered tree map/set | `BTree`, `BTreeMap`, `BTreeSet` |
+| Ordered skip-list map/set | `SkipMap`, `SkipSet` |
+| Prefix map | `TrieMap` |
+| Range abstraction | `bound` (`Bound`, `RangeBounds`) |
+
+---
+
+## Quick start
 
 ```go
 package main
@@ -39,242 +58,182 @@ import (
 )
 
 func main() {
-	// Create a new hash map
-	m := ds.NewHashMap[string, int](ds.DefaultHasher[string]{})
-	m.Insert("apple", 5)
-	m.Insert("banana", 3)
-	m.Insert("cherry", 7)
+	// HashMap (unordered)
+	hm := ds.NewComparableHashMap[string, int]()
+	hm.Insert("apple", 3)
+	hm.Insert("banana", 5)
 
-	// Retrieve a value
-	if val, found := m.Get("banana"); found {
-		fmt.Printf("Banana count: %d\n", val)
+	if v, ok := hm.Get("banana"); ok {
+		fmt.Println("banana:", v)
 	}
 
-	// Create a linked list
-	list := ds.NewLinkedList[int]()
-	list.PushBack(10)
-	list.PushBack(20)
-	list.PushFront(5)
+	// BTreeMap (ordered)
+	om := ds.NewOrderedBTreeMap[string, int]()
+	om.Insert("a", 1)
+	om.Insert("b", 2)
+	om.Insert("c", 3)
 
-	// Iterate through the list
-	fmt.Println("Linked list elements:")
-	for val := range list.Iter() {
-		fmt.Printf("%d ", val)
+	for k, v := range om.IterAsc() {
+		fmt.Println(k, v)
 	}
-	fmt.Println()
 }
 ```
 
-## Data Structure Capabilities
+---
 
-The following table shows the core capabilities supported by each data structure:
-- ✅ Indicates the data structure supports this function
-- ❌ Indicates the data structure does not support this function
+## Core API concepts
 
-| Function | LinkedList | ArrayDeque | HashMap | HashSet | BTree | BTreeMap | BTreeSet | SkipMap | SkipSet | TrieMap | PriorityQueue |
-|---------|------------|------------|---------|---------|-------|----------|----------|---------|---------|---------|---------------|
-| **Basic Operations** | | | | | | | | | | |
-| Clear   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Len     | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| IsEmpty | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Compact | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| **Access & Modification** | | | | | | | | | | |
-| Get     | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
-| GetMut  | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
-| Insert  | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Remove  | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **List/Queue Operations** | | | | | | | | | | |
-| PushFront | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| PopFront  | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| PushBack  | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| PopBack   | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Front     | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Back      | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Set Operations** | | | | | | | | | | |
-| Contains  | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| ContainsKey | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| **Ordered Data Operations** | | | | | | | | | | |
-| First    | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Last     | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Range    | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| PopFirst | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| PopLast  | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Iterators** | | | | | | | | | | |
-| Iter     | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| IterMut  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
-| **Collection Operations** | | | | | | | | | | |
-| Extend   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Difference | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Union    | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Intersection | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| IsSubset | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| IsSuperset | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| SymmetricDifference | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Equal    | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Priority Queue Operations** | | | | | | | | | | |
-| Push    | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Pop     | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Peek    | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+### 1) Directional iteration
 
-## Core Data Structures
+Ordered structures use explicit direction in API names:
 
-### Linked List
+- `IterAsc()` / `IterDesc()`
+- `RangeAsc(bounds)` / `RangeDesc(bounds)`
+
+This avoids ambiguity and improves call-site readability.
+
+### 2) Bounds-based range queries
+
+Use `RangeBounds` to model inclusive/exclusive/unbounded boundaries.
 
 ```go
-// Create a new linked list
-list := ds.NewLinkedList[int]()
+m := ds.NewOrderedSkipMap[int, string]()
+m.Insert(10, "a")
+m.Insert(20, "b")
+m.Insert(30, "c")
 
-// Add elements
-list.PushBack(1)
-list.PushFront(0)
-list.PushBack(2)
+bounds := ds.NewRangeBounds(
+	ds.NewIncluded(10),
+	ds.NewExcluded(30),
+)
 
-// Remove elements
-value, _ := list.PopFront()  // 0
-value, _ = list.PopBack()    // 2
-
-// Iterate
-for val := range list.Iter() {
-    fmt.Println(val)  // 1
+for k, v := range m.RangeAsc(bounds) {
+	fmt.Println(k, v) // 10 a, 20 b
 }
 ```
 
-### Hash Map
+You can also create fully unbounded ranges:
 
 ```go
-// Create a new hash map with default hasher
-m := ds.NewHashMap[string, int](ds.DefaultHasher[string]{})
-
-// Insert key-value pairs
-m.Insert("one", 1)
-m.Insert("two", 2)
-
-// Retrieve values
-value, found := m.Get("one")
-
-// Update values
-oldValue, updated := m.Insert("one", 10)
-
-// Iterate through all key-value pairs
-for key, val := range m.Iter() {
-    fmt.Printf("%s: %d\n", key, val)
-}
+all := ds.NewRangeBounds(ds.NewUnbounded[int](), ds.NewUnbounded[int]())
+_ = all
 ```
 
-### Priority Queue
+### 3) Entry workflow (map-like types)
+
+Map-like structures expose `Entry` helpers for upsert/delete flows:
 
 ```go
-// Create a min-heap (sorts by age ascending)
-minHeap := ds.NewMinPriorityQueue[Person](func(a, b Person) int {
-    return a.Age - b.Age
-})
+m := ds.NewComparableHashMap[string, int]()
 
-// Add elements
-minHeap.Push(Person{Name: "Alice", Age: 30})
-minHeap.Push(Person{Name: "Bob", Age: 25})
+m.Entry("x").AndModify(func(v *int) { *v += 1 }).OrInsert(1)
 
-// Get highest priority element
-person, _ := minHeap.Pop()  // Bob
+old, existed := m.Entry("x").Insert(10)
+fmt.Println(old, existed) // 1 true
 
-// Peek at the highest priority element without removing
-person, _ = minHeap.Peek()  // Alice
+removed := m.Entry("x").Delete()
+fmt.Println(removed) // true
 ```
 
-### BTreeMap
+---
+
+## Focused examples
+
+### BTreeSet + range bounds
 
 ```go
-// Create an ordered BTreeMap for ordered types
-m := ds.NewOrderedBTreeMap[string, int]()
+s := ds.NewOrderedBTreeSet[int]()
+for _, v := range []int{1, 2, 3, 4, 5} {
+	s.Insert(v)
+}
 
-// Insert key-value pairs
-m.Insert("apple", 5)
-m.Insert("banana", 3)
-m.Insert("cherry", 7)
+bounds := ds.NewRangeBounds(ds.NewIncluded(2), ds.NewIncluded(4))
+for v := range s.RangeAsc(bounds) {
+	fmt.Println(v) // 2, 3, 4
+}
+```
 
-// Get first and last elements
-first, _ := m.First()      // apple: 5
-last, _ := m.Last()        // cherry: 7
-
-// Range query
-m.Range(func(key string, value int) bool {
-    fmt.Printf("%s: %d\n", key, value)
-
-### TrieMap
+### SkipSet set algebra
 
 ```go
-// Create a new TrieMap
-m := ds.NewTrieMap[string, int]()
+a := ds.NewOrderedSkipSet[int]()
+b := ds.NewOrderedSkipSet[int]()
+for _, v := range []int{1, 2, 3} { a.Insert(v) }
+for _, v := range []int{3, 4, 5} { b.Insert(v) }
 
-// Insert key-value pairs
-m.Insert("apple", 5)
-m.Insert("app", 3)
-m.Insert("banana", 7)
-
-// Get values
-value, found := m.Get("apple")  // 5, true
-
-// Check if key exists
-value, found = m.Get("ap")      // 0, false (key not found)
-
-// Remove a key
-m.Remove("app")
-
-// Iterate through all key-value pairs
-for key, val := range m.Iter() {
-    fmt.Printf("%s: %d\n", key, val)
+u := a.Union(b)
+for v := range u.IterAsc() {
+	fmt.Println(v) // 1 2 3 4 5
 }
 ```
-```
 
-## Custom Hashing
-
-For complex types or custom hashing behavior, implement your own `Hasher`:
+### TrieMap prefix iteration
 
 ```go
-// Custom struct
-type Point struct {
-    X, Y int
+m := ds.NewOrderedTrieMap[string, int]()
+m.Insert([]string{"app"}, 1)
+m.Insert([]string{"app", "le"}, 2)
+m.Insert([]string{"app", "store"}, 3)
+
+for key, val := range m.IterByPrefix([]string{"app"}) {
+	fmt.Println(key, val)
 }
-
-// Custom hasher
-type PointHasher struct{}
-
-func (PointHasher) Equal(p1, p2 Point) bool {
-    return p1.X == p2.X && p1.Y == p2.Y
-}
-
-func (PointHasher) Hash(h *maphash.Hash, p Point) {
-    maphash.WriteInt(h, p.X)
-    maphash.WriteInt(h, p.Y)
-}
-
-// Usage
-pointMap := ds.NewHashMap[Point, string](PointHasher{})
-pointMap.Insert(Point{X: 1, Y: 2}, "Start point")
 ```
 
-## Requirements
+### PriorityQueue
 
-- Go 1.24 or higher (for full generics support)
-- No external dependencies
+```go
+pq := ds.NewMinOrderedPriorityQueue[int]()
+pq.Push(4)
+pq.Push(1)
+pq.Push(3)
 
-## Testing
+for !pq.IsEmpty() {
+	v, _ := pq.Pop()
+	fmt.Println(v) // 1, 3, 4
+}
+```
 
-Run the test suite:
+---
+
+## API consistency notes
+
+- Ordered map APIs (`BTreeMap`, `SkipMap`) are intentionally aligned:
+  - directional iterators and ranges (`Asc` / `Desc`)
+  - mutable iterator variants for values
+  - `Entry` support
+- Ordered set APIs (`BTreeSet`, `SkipSet`) expose matching set-algebra operations.
+- `HashMap`/`HashSet` keep unordered semantics but follow the same return-style conventions where possible.
+
+
+## Development style
+
+The repository follows a unified style guide for naming, range APIs, Entry semantics,
+and documentation conventions. See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+---
+
+## Running tests
 
 ```bash
-go test ./... -v
+go test ./...
 ```
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please follow these guidelines:
+Issues and pull requests are welcome.
 
-1. Ensure your code follows Go's standard formatting
-2. Add appropriate test cases for any new functionality
-3. Update documentation as needed
-4. Maintain consistency with existing API design
+Please keep contributions aligned with repository conventions:
+
+1. Add/update tests for behavior changes.
+2. Keep naming consistent across equivalent structures.
+3. Update docs/examples when public APIs change.
+4. Run `gofmt` and `go test ./...` before submitting.
+
+---
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+MIT. See [LICENSE](./LICENSE).

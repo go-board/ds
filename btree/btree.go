@@ -24,14 +24,14 @@
 //	val, found := tree.Search(5) // 5, true
 //
 //	// Traverse elements (in order)
-//	for val := range tree.Iter() {
+//	for val := range tree.IterAsc() {
 //	    fmt.Println(val) // Output: 3, 5, 7
 //	}
 //
 //	// Get elements within a range
 //	lower := 4
 //	upper := 8
-//	for val := range tree.Range(&lower, &upper) {
+//	for val := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
 //	    fmt.Println(val) // Output: 5, 7
 //	}
 package btree
@@ -274,30 +274,6 @@ func (t *BTree[E]) Remove(key E) bool {
 	}
 	return deleted
 }
-
-// Range returns an iterator over all elements in the B-tree within the specified range, in in-order traversal
-//
-// Parameters:
-//   - lowerBound: The lower bound of the range, or nil for no lower bound
-//   - upperBound: The upper bound of the range, or nil for no upper bound
-//
-// Returns:
-//   - An iterator over elements within the specified range, in ascending order
-//
-// Range Rules:
-//   - Closed interval lower bound: includes elements equal to lowerBound
-//   - Open interval upper bound: excludes elements equal to upperBound
-//
-// Example:
-//
-//	// Get all elements greater than or equal to 4 and less than 8
-//	lower := 4
-//	upper := 8
-//	for val := range tree.Range(&lower, &upper) {
-//	    fmt.Println(val)
-//	}
-//
-// iter相关方法已移至iter.go文件中
 
 // First returns the smallest element in the B-tree
 //

@@ -112,16 +112,12 @@ func (e Entry[K, V]) AndModify(modifyFn func(*V)) Entry[K, V] {
 }
 
 // Get retrieves the value associated with the key (if it exists).
-// Returns:
-//   - If the key exists, returns a reference to the value and true
-//   - If the key does not exist, returns nil and false
-func (e Entry[K, V]) Get() (*V, bool) {
-	// If node exists, return reference to value and true
+func (e Entry[K, V]) Get() (V, bool) {
+	var zero V
 	if e.node != nil {
-		return &e.node.Value, true
+		return e.node.Value, true
 	}
-	// Node does not exist, return nil and false
-	return nil, false
+	return zero, false
 }
 
 // Insert unconditionally inserts or updates the key-value pair.
@@ -132,8 +128,13 @@ func (e Entry[K, V]) Get() (*V, bool) {
 //   - If the key already existed, returns the old value and true
 //   - If the key did not exist, returns the zero value and false
 func (e Entry[K, V]) Insert(value V) (V, bool) {
-	// Directly call the Insert method of the map
-	return e.mapRef.Insert(e.key, value)
+	return e.mapRef.insert(e.key, value)
+}
+
+// Delete removes the key and reports whether it existed.
+func (e Entry[K, V]) Delete() bool {
+	_, ok := e.mapRef.Remove(e.key)
+	return ok
 }
 
 // getNode is an internal method of SkipMap for retrieving the node associated with the specified key.
