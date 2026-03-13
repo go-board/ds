@@ -1,31 +1,3 @@
-// Package hashmap implements a generic hash map data structure.
-// HashMap provides efficient key-value mapping operations, supporting arbitrary key and value types,
-// with fast lookup, insertion, and deletion through hashing algorithms, achieving average O(1) time complexity.
-//
-// Example:
-//
-//	// Create a new string-to-integer hash map
-//	stringHasher := hashutil.StrHasher{}
-//	m := hashmap.NewHashMap[string, int](stringHasher)
-//
-//	// Insert key-value pairs
-//	_, updated := m.Insert("apple", 5)
-//	fmt.Println(updated) // false, since it's a new insertion
-//
-//	// Update an existing key
-//	oldValue, updated := m.Insert("apple", 10)
-//	fmt.Println(oldValue, updated) // 5 true
-//
-//	// Get value
-//	val, found := m.Get("apple")
-//	if found {
-//		fmt.Println(val) // 10
-//	}
-//
-//	// Iterate through all key-value pairs
-//	for k, v := range m.Iter() {
-//		fmt.Printf("%s: %d\n", k, v)
-//	}
 package hashmap
 
 import (
@@ -54,6 +26,7 @@ type bucket[K, V any] struct {
 }
 
 // New creates a new empty HashMap instance.
+//
 // Parameters:
 //   - hasher: Specific implementation instance for hash computation and equality comparison
 //
@@ -95,6 +68,7 @@ func NewComparable[K comparable, V any]() *HashMap[K, V, hashutil.Default[K]] {
 }
 
 // NewFromMap creates a new HashMap instance from an existing map.
+//
 // Parameters:
 //   - m: The map to copy key-value pairs from
 //
@@ -119,6 +93,7 @@ func NewFromMap[K comparable, V any, M ~map[K]V](m M) *HashMap[K, V, hashutil.De
 }
 
 // hash computes the hash value for a key, for internal use.
+//
 // Parameters:
 //   - key: The key to compute the hash value for
 //

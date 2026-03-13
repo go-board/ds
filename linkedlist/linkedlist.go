@@ -1,38 +1,3 @@
-// Package linkedlist implements a generic doubly linked list data structure.
-//
-// LinkedList is a doubly linked list that supports efficient addition and removal of elements at both ends,
-// as well as bidirectional traversal. It is suitable for scenarios with frequent insertion and deletion operations.
-//
-// Features:
-//   - Efficient addition and removal of elements at both ends
-//   - Support for bidirectional traversal
-//   - Support for batch operations
-//   - Support for retaining elements that meet certain conditions
-//
-// Example usage:
-//
-//	// Create an integer linked list
-//	list := linkedlist.New[int]()
-//
-//	// Add elements at the end
-//	list.PushBack(1)
-//	list.PushBack(2)
-//
-//	// Add element at the beginning
-//	list.PushFront(0)
-//
-//	// Access elements
-//	front, _ := list.Front() // 0
-//	back, _ := list.Back()   // 2
-//
-//	// Traverse elements
-//	for val := range list.Iter() {
-//	    fmt.Println(val) // Output: 0, 1, 2
-//	}
-//
-//	// Remove elements
-//	val, _ := list.PopFront() // 0
-//	val, _ := list.PopBack()  // 2
 package linkedlist
 
 // node represents a node structure in the doubly linked list

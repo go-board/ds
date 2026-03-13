@@ -1,40 +1,3 @@
-// Package hashset implements an unordered set data structure based on hash tables.
-//
-// HashSet is an unordered collection type where elements are stored as hash table entries,
-// with each element appearing at most once in the set. Unlike BTreeSet, HashSet does not guarantee element order,
-// but provides average O(1) time complexity for insertion, deletion, and lookup operations.
-//
-// Features:
-//   - Unordered storage with non-deterministic iteration order
-//   - Efficient insertion, deletion, and lookup operations with average O(1) time complexity
-//   - Support for set operations (union, intersection, difference, etc.)
-//   - Generic support for any element type with proper hash implementation
-//
-// Usage example:
-//
-//	// Create a string hash set (using predefined string hasher)
-//	set := hashset.NewHashSet[string](hashutil.StringHasher)
-//
-//	// Insert elements
-//	set.Insert("apple")
-//	set.Insert("banana")
-//	set.Insert("orange")
-//
-//	// Check element existence
-//	exists := set.Contains("banana") // true
-//
-//	// Iterate through elements (order is not fixed)
-//	for val := range set.Iter() {
-//	    fmt.Println(val)
-//	}
-//
-//	// Set operations
-//	otherSet := hashset.NewHashSet[string](hashutil.StringHasher)
-//	otherSet.Insert("banana")
-//	otherSet.Insert("grape")
-//
-//	union := set.Union(otherSet)        // {apple, banana, orange, grape}
-//	intersection := set.Intersection(otherSet) // {banana}
 package hashset
 
 import (
@@ -73,7 +36,7 @@ type HashSet[E any, H hashutil.Hasher[E]] struct {
 // Time complexity: O(1)
 func New[E any, H hashutil.Hasher[E]](hasher H) *HashSet[E, H] {
 	return &HashSet[E, H]{
-		table:  hashmap.New[E, struct{}, H](hasher),
+		table:  hashmap.New[E, struct{}](hasher),
 		hasher: hasher,
 	}
 }

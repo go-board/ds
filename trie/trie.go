@@ -1,4 +1,3 @@
-// Package trie implements a generic trie (prefix tree) data structure.
 package trie
 
 import (

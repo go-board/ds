@@ -1,29 +1,3 @@
-// Package hashutil provides generic hashing utilities for hash computation and equality comparison of various types.
-//
-// This package defines the Hasher interface, allowing custom hash and equality comparison logic for any type.
-// It also provides default hasher implementations for comparable types, as well as specialized hashers for slice and map types.
-//
-// Features:
-//   - Supports hash computation and equality comparison for any type
-//   - Provides default implementation for comparable types
-//   - Supports hash computation for slice and map types
-//   - Compatible with the standard library maphash package
-//
-// Usage examples:
-//
-//	// Create a string hash map using the default hasher
-//	stringHasher := hashutil.Default[string]{}
-//	m := hashmap.NewHashMap[string, int](stringHasher)
-//
-//	// Create a slice hasher
-//	intHasher := hashutil.Default[int]{}
-//	sliceHasher := hashutil.NewSliceHasher[int](intHasher)
-//	sliceMap := hashmap.NewHashMap[[]int, string](sliceHasher)
-//
-//	// Create a map hasher
-//	valueHasher := hashutil.Default[string]{}
-//	mapHasher := hashutil.NewMapHasher[map[string]string](valueHasher)
-//	mapSet := hashset.NewHashSet[map[string]string](mapHasher)
 package hashutil
 
 import (

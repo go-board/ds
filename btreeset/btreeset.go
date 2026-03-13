@@ -1,39 +1,3 @@
-// Package btreeset implements a B-tree based ordered set data structure.
-//
-// BTreeSet is an ordered collection type where elements are arranged according to a defined order,
-// and each element appears at most once in the set.
-//
-// Features:
-//   - Ordered storage with support for sequential element traversal
-//   - Efficient insertion, deletion, and lookup operations with O(log n) time complexity
-//   - Support for set operations (union, intersection, difference, etc.)
-//   - Support for range queries
-//
-// Example usage:
-//
-//	// Create a new ordered set for integers
-//	set := btreeset.NewOrdered[int]()
-//
-//	// Insert elements
-//	set.Insert(5)
-//	set.Insert(3)
-//	set.Insert(7)
-//
-//	// Check if an element exists
-//	exists := set.Contains(5) // true
-//
-//	// Iterate through elements (in order)
-//	for val := range set.IterAsc() {
-//	    fmt.Println(val) // Output: 3, 5, 7
-//	}
-//
-//	// Set operations
-//	otherSet := btreeset.NewOrdered[int]()
-//	otherSet.Insert(5)
-//	otherSet.Insert(10)
-//
-//	union := set.Union(otherSet)        // {3, 5, 7, 10}
-//	intersection := set.Intersection(otherSet) // {5}
 package btreeset
 
 import (

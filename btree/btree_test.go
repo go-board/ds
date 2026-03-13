@@ -1,25 +1,16 @@
 package btree
 
 import (
+	"cmp"
 	"github.com/go-board/ds/bound"
 	"reflect"
 	"testing"
 )
 
-// Custom comparison function
-func intComparator(a, b int) int {
-	if a < b {
-		return -1
-	} else if a > b {
-		return 1
-	}
-	return 0
-}
-
 // TestNew
 func TestNew(t *testing.T) {
 	// Test basic creation
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 	if tree == nil {
 		t.Fatal("New should return non-nil tree")
 	}
@@ -56,7 +47,7 @@ func TestNewOrdered(t *testing.T) {
 
 // TestInsert
 func TestInsert(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Test single insertion
 	tree.Insert(5)
@@ -80,7 +71,7 @@ func TestInsert(t *testing.T) {
 	}
 
 	// Test inserting a large amount of data (trigger node splitting)
-	treeLarge := New(intComparator)
+	treeLarge := NewOrdered[int]()
 	for i := 0; i < 1000; i++ {
 		treeLarge.Insert(i)
 	}
@@ -91,7 +82,7 @@ func TestInsert(t *testing.T) {
 
 // TestSearch
 func TestSearch(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 	values := []int{5, 3, 7, 2, 4, 6, 8}
 	for _, v := range values {
 		tree.Insert(v)
@@ -121,7 +112,7 @@ func TestSearch(t *testing.T) {
 	}
 
 	// Test searching in an empty tree
-	emptyTree := New(intComparator)
+	emptyTree := NewOrdered[int]()
 	val, found := emptyTree.Search(5)
 	if found {
 		t.Error("Search should not find value in empty tree")
@@ -133,7 +124,7 @@ func TestSearch(t *testing.T) {
 
 // TestRemove
 func TestRemove(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 	values := []int{5, 3, 7, 2, 4, 6, 8}
 	for _, v := range values {
 		tree.Insert(v)
@@ -161,14 +152,14 @@ func TestRemove(t *testing.T) {
 	}
 
 	// Test removing from an empty tree
-	emptyTree := New(intComparator)
+	emptyTree := NewOrdered[int]()
 	removed = emptyTree.Remove(5)
 	if removed {
 		t.Error("Remove should return false for empty tree")
 	}
 
 	// Test removing all elements
-	fullTree := New(intComparator)
+	fullTree := NewOrdered[int]()
 	for _, v := range values {
 		fullTree.Insert(v)
 	}
@@ -180,7 +171,7 @@ func TestRemove(t *testing.T) {
 	}
 
 	// Test complex deletion scenarios (trigger node merging, etc.)
-	treeComplex := New(intComparator)
+	treeComplex := NewOrdered[int]()
 	for i := 0; i < 100; i++ {
 		treeComplex.Insert(i)
 	}
@@ -195,7 +186,7 @@ func TestRemove(t *testing.T) {
 
 // TestIter
 func TestIter(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 	values := []int{5, 3, 7, 2, 4, 6, 8}
 	expected := []int{2, 3, 4, 5, 6, 7, 8} // in-order traversal order
 
@@ -221,7 +212,7 @@ func TestIter(t *testing.T) {
 	}
 
 	// Test empty tree iterator
-	emptyTree := New(intComparator)
+	emptyTree := NewOrdered[int]()
 	count := 0
 	for range emptyTree.IterAsc() {
 		count++
@@ -233,7 +224,7 @@ func TestIter(t *testing.T) {
 
 // TestRange
 func TestRange(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 	values := []int{1, 3, 5, 7, 9, 2, 4, 6, 8, 10}
 	for _, v := range values {
 		tree.Insert(v)
@@ -368,7 +359,7 @@ func TestIterDesc(t *testing.T) {
 
 // TestFirstLast
 func TestFirstLast(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Test empty tree
 	_, found := tree.First()
@@ -405,7 +396,7 @@ func TestFirstLast(t *testing.T) {
 
 // TestPopFirstLast
 func TestPopFirstLast(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 	values := []int{5, 3, 7, 2, 4, 6, 8}
 	for _, v := range values {
 		tree.Insert(v)
@@ -469,7 +460,7 @@ func TestCustomType(t *testing.T) {
 
 	// Age-based comparator
 	personComparator := func(a, b Person) int {
-		return intComparator(a.Age, b.Age)
+		return cmp.Compare(a.Age, b.Age)
 	}
 
 	tree := New(personComparator)
@@ -528,7 +519,7 @@ func TestCustomType(t *testing.T) {
 
 // TestComplexOperations
 func TestComplexOperations(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert large amount of data
 	for i := 0; i < 1000; i++ {
@@ -591,7 +582,7 @@ func TestComplexOperations(t *testing.T) {
 
 // New test case: Testing the getSuccessor function
 func TestGetSuccessor(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Construct a specific B-tree structure to test getSuccessor
 	// Insert enough data to trigger node splitting
@@ -637,7 +628,7 @@ func TestGetSuccessor(t *testing.T) {
 
 // New test case: Test the borrowFromLeft function
 func TestBorrowFromLeft(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert data to create a specific tree structure
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}
@@ -684,7 +675,7 @@ func TestBorrowFromLeft(t *testing.T) {
 
 // New test case: Test the borrowFromRight function
 func TestBorrowFromRight(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert data to create a specific tree structure
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}
@@ -730,7 +721,7 @@ func TestBorrowFromRight(t *testing.T) {
 
 // New test case: Test the mergeChildren function
 func TestMergeChildren(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 	for _, v := range values {
@@ -774,7 +765,7 @@ func TestMergeChildren(t *testing.T) {
 
 // New test case: Test boundary cases for rangeNode function
 func TestRangeNodeEdgeCases(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Test range query on empty tree
 	var result []int
@@ -822,7 +813,7 @@ func TestRangeNodeEdgeCases(t *testing.T) {
 
 // New test case: Specifically test getSuccessor function calls
 func TestGetSuccessorSpecifically(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Construct a specific B-tree structure to ensure getSuccessor is called during deletion
 	// Insert data to create a right subtree with sufficient keys
@@ -871,7 +862,7 @@ func TestGetSuccessorSpecifically(t *testing.T) {
 
 // New test case: Test specific cases for borrowFromLeft function
 func TestBorrowFromLeftSpecifically(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert specific data to create a tree structure that satisfies borrowFromLeft call conditions
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
@@ -930,7 +921,7 @@ func TestBorrowFromLeftSpecifically(t *testing.T) {
 
 // New test case: Test full coverage for rangeNode function
 func TestRangeNodeFullCoverage(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	values := []int{1, 3, 5, 7, 9, 11, 13, 15, 17, 19}
 	for _, v := range values {
@@ -1017,7 +1008,7 @@ func TestRangeNodeFullCoverage(t *testing.T) {
 
 // New test case: Construct specific scenario to ensure getSuccessor function is called
 func TestEnsureGetSuccessorCalled(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert specific data patterns to construct a B-tree structure that satisfies getSuccessor call conditions
 	// We need to construct a case where:
@@ -1074,7 +1065,7 @@ func TestEnsureGetSuccessorCalled(t *testing.T) {
 
 // New test case: Test more branches of rangeNode function
 func TestRangeNodeMoreBranches(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert a large amount of data to create a complex B-tree structure
 	for i := 1; i <= 50; i++ {
@@ -1132,7 +1123,7 @@ func TestRangeNodeMoreBranches(t *testing.T) {
 
 // New test case: Test borrowFromLeft branch of deleteNode function
 func TestDeleteNodeBorrowFromLeft(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert specific data to trigger borrowFromLeft operation
 	// Need to construct a case where borrowing from left sibling is required
@@ -1190,7 +1181,7 @@ func TestDeleteNodeBorrowFromLeft(t *testing.T) {
 
 // New test case: Test complex range query scenarios
 func TestComplexRangeQueries(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	for i := 1; i <= 30; i++ {
 		tree.Insert(i)
@@ -1245,7 +1236,7 @@ func TestComplexRangeQueries(t *testing.T) {
 
 // New test case: Test early termination in rangeNode function
 func TestRangeNodeEarlyTermination(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	for i := 1; i <= 20; i++ {
 		tree.Insert(i)
@@ -1273,7 +1264,7 @@ func TestRangeNodeEarlyTermination(t *testing.T) {
 
 // New test case: Constructing specific scenarios to ensure getSuccessor function is triggered
 func TestGetSuccessorTrigger(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert a large amount of data to create a complex B-tree structure
 	for i := 1; i <= 30; i++ {
@@ -1317,7 +1308,7 @@ func TestGetSuccessorTrigger(t *testing.T) {
 
 // New test case: Test more branches of borrowFromLeft function
 func TestBorrowFromLeftMoreBranches(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert specific data to better trigger borrowFromLeft operations
 	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}
@@ -1374,7 +1365,7 @@ func TestBorrowFromLeftMoreBranches(t *testing.T) {
 
 // New test case: Ensure all lines in getSuccessor function are executed
 func TestGetSuccessorAllLines(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert a large amount of data to create a multi-level B-tree structure
 	// This ensures the for loop in getSuccessor function will be executed
@@ -1415,7 +1406,7 @@ func TestGetSuccessorAllLines(t *testing.T) {
 
 // New test case: Test for loop execution in getSuccessor function
 func TestGetSuccessorLoopExecution(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert data in a specific pattern to ensure creation of a structure with internal nodes
 	// This ensures the for loop condition in getSuccessor function is true
@@ -1470,7 +1461,7 @@ func TestGetSuccessorLoopExecution(t *testing.T) {
 
 // New test case: Ensure complete execution of for loop in getSuccessor function
 func TestGetSuccessorFullLoopExecution(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert a large amount of data to create a multi-level B-tree structure
 	// This ensures the for loop in getSuccessor function will be executed multiple times
@@ -1512,7 +1503,7 @@ func TestGetSuccessorFullLoopExecution(t *testing.T) {
 
 // New test case: Test for loop execution in getSuccessor function
 func TestGetSuccessorLoopExecutionSpecific(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// This ensures the for loop in getSuccessor function will be executed
 	for i := 1; i <= 200; i++ {
@@ -1550,7 +1541,7 @@ func TestGetSuccessorLoopExecutionSpecific(t *testing.T) {
 
 // New test case: Ensure complete execution of for loop in getSuccessor function
 func TestGetSuccessorFullLoopCoverage(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Use a specific insertion order to create a complex internal node structure
 	values := make([]int, 0)
@@ -1615,7 +1606,7 @@ func TestGetSuccessorFullLoopCoverage(t *testing.T) {
 
 // New test case: Test all branches of getSuccessor function
 func TestGetSuccessorAllBranches(t *testing.T) {
-	tree := New(intComparator)
+	tree := NewOrdered[int]()
 
 	// Insert enough data to create a complex B-tree structure
 	for i := 1; i <= 50; i++ {

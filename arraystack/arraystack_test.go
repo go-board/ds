@@ -100,7 +100,7 @@ func TestPop(t *testing.T) {
 	}
 
 	// Test Pop after stack is empty
-	val, found = stack.Pop()
+	_, found = stack.Pop()
 	if found {
 		t.Fatal("Pop on empty stack should return false")
 	}

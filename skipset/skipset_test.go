@@ -2,11 +2,12 @@ package skipset
 
 import (
 	"fmt"
-	"github.com/go-board/ds/bound"
 	"math/rand"
+	"slices"
 	"sort"
 	"testing"
-	"time"
+
+	"github.com/go-board/ds/bound"
 )
 
 // Test basic insertion, deletion, and containment check functionality
@@ -606,7 +607,7 @@ func TestSkipSetCustomComparator(t *testing.T) {
 		return 0
 	}
 
-	ss := New[string](customCmp)
+	ss := New(customCmp)
 
 	// Insert strings of different lengths
 	ss.Insert("a")
@@ -660,7 +661,7 @@ func TestSkipSetCustomElementType(t *testing.T) {
 		return 0
 	}
 
-	ss := New[Person](personCmp)
+	ss := New(personCmp)
 
 	// Insert data
 	people := []Person{
@@ -716,9 +717,8 @@ func TestSkipSetLargeLoad(t *testing.T) {
 	ss := NewOrdered[int]()
 
 	// Insert random data
-	rand.Seed(time.Now().UnixNano())
 	data := make(map[int]bool)
-	for i := 0; i < size; i++ {
+	for range size {
 		k := rand.Intn(size * 10)
 		data[k] = true
 		ss.Insert(k)
@@ -783,18 +783,15 @@ func TestSkipSetModifyDuringIteration(t *testing.T) {
 	ss := NewOrdered[string]()
 
 	// Insert some data
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		ss.Insert(fmt.Sprintf("item%d", i))
 	}
 
 	// Delete some elements during iteration
 	toDelete := []string{"item2", "item5", "item8"}
 	for val := range ss.IterAsc() {
-		for _, delVal := range toDelete {
-			if val == delVal {
-				ss.Remove(val)
-				break
-			}
+		if slices.Contains(toDelete, val) {
+			ss.Remove(val)
 		}
 	}
 

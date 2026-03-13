@@ -1,17 +1,11 @@
 package bound
 
-import "testing"
+import (
+	"cmp"
+	"testing"
+)
 
-func intCmp(a, b int) int {
-	switch {
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	default:
-		return 0
-	}
-}
+func intCmp(a, b int) int { return cmp.Compare(a, b) }
 
 func TestBoundKinds(t *testing.T) {
 	ub := NewUnbounded[int]()

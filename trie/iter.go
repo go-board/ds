@@ -1,4 +1,3 @@
-// Package trie implements a generic trie (prefix tree) data structure.
 package trie
 
 import (
@@ -6,8 +5,11 @@ import (
 )
 
 // Iter returns an iterator over all key-value pairs in the trie.
-// Return value:
-//   - Iterator over key-value pairs, of type iter.Seq2[[]K, V]
+//
+// Returns:
+//   - An iter.Seq2[[]K, V] that yields (key, value) pairs.
+//
+// Time Complexity: O(n * L) where n is the number of entries and L is average key length.
 func (m *TrieMap[K, V]) Iter() iter.Seq2[[]K, V] {
 	return func(yield func([]K, V) bool) {
 		for k, n := range m.makeIter(make([]K, 0)) {
@@ -19,8 +21,12 @@ func (m *TrieMap[K, V]) Iter() iter.Seq2[[]K, V] {
 }
 
 // IterMut returns a mutable iterator over all key-value pairs in the trie.
-// Return value:
-//   - Mutable iterator over key-value pairs, of type iter.Seq2[[]K, *V]
+//
+// Returns:
+//   - An iter.Seq2[[]K, *V] that yields (key, pointer to value) pairs.
+//   - The yielded values can be modified in place.
+//
+// Time Complexity: O(n * L) where n is the number of entries and L is average key length.
 func (m *TrieMap[K, V]) IterMut() iter.Seq2[[]K, *V] {
 	return func(yield func([]K, *V) bool) {
 		for k, n := range m.makeIter(make([]K, 0)) {
@@ -32,11 +38,14 @@ func (m *TrieMap[K, V]) IterMut() iter.Seq2[[]K, *V] {
 }
 
 // Keys returns an iterator over all keys in the trie.
-// Return value:
-//   - Iterator over keys, of type iter.Seq[[]K]
+//
+// Returns:
+//   - An iter.Seq[[]K] that yields all keys.
+//
+// Time Complexity: O(n * L) where n is the number of entries and L is average key length.
 func (m *TrieMap[K, V]) Keys() iter.Seq[[]K] {
 	return func(yield func([]K) bool) {
-		for k, _ := range m.makeIter(make([]K, 0)) {
+		for k := range m.makeIter(make([]K, 0)) {
 			if !yield(k) {
 				return
 			}
@@ -45,8 +54,11 @@ func (m *TrieMap[K, V]) Keys() iter.Seq[[]K] {
 }
 
 // Values returns an iterator over all values in the trie.
-// Return value:
-//   - Iterator over values, of type iter.Seq[V]
+//
+// Returns:
+//   - An iter.Seq[V] that yields all values.
+//
+// Time Complexity: O(n * L) where n is the number of entries and L is average key length.
 func (m *TrieMap[K, V]) Values() iter.Seq[V] {
 	return func(yield func(V) bool) {
 		for _, n := range m.makeIter(make([]K, 0)) {
@@ -58,12 +70,12 @@ func (m *TrieMap[K, V]) Values() iter.Seq[V] {
 }
 
 // ValuesMut returns a mutable iterator over all values in the trie.
-// Return value:
-//   - Mutable iterator over values, of type iter.Seq[*V]
 //
-// ValuesMut returns an iterator over all values in the trie, allowing mutation.
-// Return value:
-//   - Iterator over value pointers, of type iter.Seq[*V]
+// Returns:
+//   - An iter.Seq[*V] that yields pointers to all values.
+//   - The yielded values can be modified in place.
+//
+// Time Complexity: O(n * L) where n is the number of entries and L is average key length.
 func (m *TrieMap[K, V]) ValuesMut() iter.Seq[*V] {
 	return func(yield func(*V) bool) {
 		for _, n := range m.makeIter(make([]K, 0)) {
@@ -74,15 +86,18 @@ func (m *TrieMap[K, V]) ValuesMut() iter.Seq[*V] {
 	}
 }
 
-// KeysByPrefix returns all keys in the trie with the given prefix as an iterator.
-// Parameters:
-//   - prefix: The prefix to filter keys by
+// KeysByPrefix returns an iterator over all keys with the given prefix.
 //
-// Return value:
-//   - Iterator over keys with the given prefix, of type iter.Seq[[]K]
+// Parameters:
+//   - prefix: The prefix to filter keys by.
+//
+// Returns:
+//   - An iter.Seq[[]K] that yields keys starting with the prefix.
+//
+// Time Complexity: O(p + m*L) where p is prefix length and m is number of matches.
 func (m *TrieMap[K, V]) KeysByPrefix(prefix []K) iter.Seq[[]K] {
 	return func(yield func([]K) bool) {
-		for k, _ := range m.makeIter(prefix) {
+		for k := range m.makeIter(prefix) {
 			if !yield(k) {
 				return
 			}
@@ -90,12 +105,15 @@ func (m *TrieMap[K, V]) KeysByPrefix(prefix []K) iter.Seq[[]K] {
 	}
 }
 
-// ValuesByPrefix returns all values in the trie with the given prefix as an iterator.
-// Parameters:
-//   - prefix: The prefix to filter values by
+// ValuesByPrefix returns an iterator over all values with the given prefix.
 //
-// Return value:
-//   - Iterator over values with the given prefix, of type iter.Seq[V]
+// Parameters:
+//   - prefix: The prefix to filter values by.
+//
+// Returns:
+//   - An iter.Seq[V] that yields values with keys starting with the prefix.
+//
+// Time Complexity: O(p + m*L) where p is prefix length and m is number of matches.
 func (m *TrieMap[K, V]) ValuesByPrefix(prefix []K) iter.Seq[V] {
 	return func(yield func(V) bool) {
 		for _, n := range m.makeIter(prefix) {
@@ -106,12 +124,15 @@ func (m *TrieMap[K, V]) ValuesByPrefix(prefix []K) iter.Seq[V] {
 	}
 }
 
-// IterByPrefix returns an iterator over all key-value pairs in the trie with the given prefix.
-// Parameters:
-//   - prefix: The prefix to filter key-value pairs by
+// IterByPrefix returns an iterator over all key-value pairs with the given prefix.
 //
-// Return value:
-//   - Iterator over key-value pairs with the given prefix, of type iter.Seq2[[]K, V]
+// Parameters:
+//   - prefix: The prefix to filter key-value pairs by.
+//
+// Returns:
+//   - An iter.Seq2[[]K, V] that yields (key, value) pairs with keys starting with the prefix.
+//
+// Time Complexity: O(p + m*L) where p is prefix length and m is number of matches.
 func (m *TrieMap[K, V]) IterByPrefix(prefix []K) iter.Seq2[[]K, V] {
 	return func(yield func([]K, V) bool) {
 		for k, n := range m.makeIter(prefix) {
@@ -122,12 +143,16 @@ func (m *TrieMap[K, V]) IterByPrefix(prefix []K) iter.Seq2[[]K, V] {
 	}
 }
 
-// IterMutByPrefix returns a mutable iterator over all key-value pairs in the trie with the given prefix.
-// Parameters:
-//   - prefix: The prefix to filter key-value pairs by
+// IterMutByPrefix returns a mutable iterator over all key-value pairs with the given prefix.
 //
-// Return value:
-//   - Mutable iterator over key-value pairs with the given prefix, of type iter.Seq2[[]K, *V]
+// Parameters:
+//   - prefix: The prefix to filter key-value pairs by.
+//
+// Returns:
+//   - An iter.Seq2[[]K, *V] that yields (key, pointer to value) pairs with keys starting with the prefix.
+//   - The yielded values can be modified in place.
+//
+// Time Complexity: O(p + m*L) where p is prefix length and m is number of matches.
 func (m *TrieMap[K, V]) IterMutByPrefix(prefix []K) iter.Seq2[[]K, *V] {
 	return func(yield func([]K, *V) bool) {
 		for k, n := range m.makeIter(prefix) {
@@ -138,12 +163,16 @@ func (m *TrieMap[K, V]) IterMutByPrefix(prefix []K) iter.Seq2[[]K, *V] {
 	}
 }
 
-// ValuesMutByPrefix returns a mutable iterator over all values in the trie with the given prefix.
-// Parameters:
-//   - prefix: The prefix to filter values by
+// ValuesMutByPrefix returns a mutable iterator over all values with the given prefix.
 //
-// Return value:
-//   - Mutable iterator over values with the given prefix, of type iter.Seq[*V]
+// Parameters:
+//   - prefix: The prefix to filter values by.
+//
+// Returns:
+//   - An iter.Seq[*V] that yields pointers to values with keys starting with the prefix.
+//   - The yielded values can be modified in place.
+//
+// Time Complexity: O(p + m*L) where p is prefix length and m is number of matches.
 func (m *TrieMap[K, V]) ValuesMutByPrefix(prefix []K) iter.Seq[*V] {
 	return func(yield func(*V) bool) {
 		for _, n := range m.makeIter(prefix) {
@@ -154,32 +183,29 @@ func (m *TrieMap[K, V]) ValuesMutByPrefix(prefix []K) iter.Seq[*V] {
 	}
 }
 
-// Extend adds all key-value pairs from the provided iterator to the trie.
-// For each key-value pair in the iterator:
-//   - If the key already exists, its value is updated
-//   - Otherwise, a new key-value pair is added
+// Extend inserts all key-value pairs from the iterator into the trie.
 //
 // Parameters:
-//   - it: An iterator over key-value pairs to add to the trie
+//   - it: An iterator yielding key/value pairs to insert.
 //
-// Time complexity: O(N*L), where N is the number of key-value pairs in the iterator and L is the average length of the keys
+// Behavior:
+//   - If a key already exists, its value will be updated.
+//
+// Time Complexity: O(N*L) where N is the number of pairs and L is average key length.
 func (m *TrieMap[K, V]) Extend(it iter.Seq2[[]K, V]) {
 	for k, v := range it {
 		m.Insert(k, v)
 	}
 }
 
-// makeIter returns an iterator over nodes in the trie with the given prefix.
+// makeIter returns an iterator over nodes with the given prefix.
 // It performs a depth-first search (DFS) starting from the node corresponding to the prefix.
-// Return value:
-//   - Iterator over key-node pairs, of type iter.Seq2[[]K, *node[K, V]]
 func (m *TrieMap[K, V]) makeIter(prefix []K) iter.Seq2[[]K, *node[K, V]] {
 	return func(yield func([]K, *node[K, V]) bool) {
 		if m.root == nil {
 			return
 		}
 
-		// Find the node corresponding to the prefix
 		n := m.root
 		currentPrefix := make([]K, 0, len(prefix))
 
@@ -195,12 +221,10 @@ func (m *TrieMap[K, V]) makeIter(prefix []K) iter.Seq2[[]K, *node[K, V]] {
 			}
 
 			if !found {
-				// Prefix not found
 				return
 			}
 		}
 
-		// Now perform DFS starting from the node with the prefix
 		type stackFrame struct {
 			n      *node[K, V]
 			prefix []K
@@ -215,7 +239,6 @@ func (m *TrieMap[K, V]) makeIter(prefix []K) iter.Seq2[[]K, *node[K, V]] {
 			stack = stack[:len(stack)-1]
 
 			if frame.n.hasValue {
-				// Make a copy of the prefix to avoid modifying the original
 				keyCopy := make([]K, len(frame.prefix))
 				copy(keyCopy, frame.prefix)
 				if !yield(keyCopy, frame.n) {
@@ -223,10 +246,8 @@ func (m *TrieMap[K, V]) makeIter(prefix []K) iter.Seq2[[]K, *node[K, V]] {
 				}
 			}
 
-			// Push children in reverse order to ensure correct traversal order
 			for i := len(frame.n.children) - 1; i >= 0; i-- {
 				child := frame.n.children[i]
-				// Add the child's key to the prefix
 				newPrefix := append(append([]K{}, frame.prefix...), child.key)
 				stack = append(stack, stackFrame{n: child, prefix: newPrefix})
 			}

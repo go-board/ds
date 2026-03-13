@@ -1,8 +1,9 @@
 package btreemap
 
 import (
-	"github.com/go-board/ds/bound"
 	"testing"
+
+	"github.com/go-board/ds/bound"
 )
 
 // TestBTreeMapOrderedMapMethods tests the OrderedMap methods added to BTreeMap
@@ -48,7 +49,7 @@ func TestBTreeMapOrderedMapMethods(t *testing.T) {
 	t.Run("IterDesc", func(t *testing.T) {
 		expectedKeys := []string{"e", "d", "c", "b", "a"}
 		var actualKeys []string
-		for k, _ := range m.IterDesc() {
+		for k := range m.IterDesc() {
 			actualKeys = append(actualKeys, k)
 		}
 
@@ -85,7 +86,6 @@ func TestBTreeMapOrderedMapMethods(t *testing.T) {
 			t.Errorf("Expected d:40, got %d, found: %t", val, found)
 		}
 	})
-
 }
 
 // TestBTreeMapMissingMethods tests the methods that were not covered by existing tests

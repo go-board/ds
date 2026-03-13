@@ -1,31 +1,3 @@
-// Package priorityqueue implements a generic priority queue data structure.
-//
-// PriorityQueue is a heap-based priority queue that supports both min-heap and max-heap modes.
-// It allows insertion of elements and retrieval of the highest priority element in O(log n) time.
-//
-// Features:
-//   - Supports min-heap and max-heap modes
-//   - Efficient insertion and retrieval operations with O(log n) time complexity
-//   - Supports peeking at the highest priority element without removal
-//   - Supports clearing operation
-//
-// Usage examples:
-//
-//	// Create a min-heap (sorted by age)
-//	minHeap := priorityqueue.NewMinPriorityQueue[Person](func(a, b Person) int {
-//		return a.Age - b.Age
-//	})
-//
-//	// Add elements
-//	minHeap.Push(Person{Name: "Charlie", Age: 35})
-//	minHeap.Push(Person{Name: "Alice", Age: 25})
-//	minHeap.Push(Person{Name: "Bob", Age: 30})
-//
-//	// Get elements by priority
-//	for !minHeap.IsEmpty() {
-//		person, _ := minHeap.Pop()
-//		fmt.Printf("%s (Age: %d)\n", person.Name, person.Age)
-//	}
 package priorityqueue
 
 import "cmp"

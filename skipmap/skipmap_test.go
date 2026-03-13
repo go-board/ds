@@ -5,7 +5,6 @@ import (
 	"github.com/go-board/ds/bound"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 // Test basic insertion and retrieval functionality
@@ -641,7 +640,6 @@ func TestSkipMapLargeLoad(t *testing.T) {
 	sm := NewOrdered[int, int]()
 
 	// Insert random data
-	rand.Seed(time.Now().UnixNano())
 	data := make(map[int]int)
 	for i := 0; i < size; i++ {
 		k := rand.Intn(size * 10)

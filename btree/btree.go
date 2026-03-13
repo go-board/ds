@@ -1,39 +1,3 @@
-// Package btree implements a generic B-tree data structure.
-//
-// A B-tree is a self-balancing tree data structure that maintains sorted data and allows efficient insertion,
-// deletion, and lookup operations. It's particularly suitable for external storage systems like databases
-// and file systems because it reduces disk I/O operations.
-//
-// Features:
-//   - Ordered storage with support for sequential element traversal
-//   - Efficient insertion, deletion, and lookup operations with O(log n) time complexity
-//   - Support for range queries
-//   - Support for retrieving first and last elements
-//
-// Usage Example:
-//
-//	// Create an ordered B-tree for integers
-//	tree := btree.NewOrdered[int]()
-//
-//	// Insert elements
-//	tree.Insert(5)
-//	tree.Insert(3)
-//	tree.Insert(7)
-//
-//	// Check if an element exists
-//	val, found := tree.Search(5) // 5, true
-//
-//	// Traverse elements (in order)
-//	for val := range tree.IterAsc() {
-//	    fmt.Println(val) // Output: 3, 5, 7
-//	}
-//
-//	// Get elements within a range
-//	lower := 4
-//	upper := 8
-//	for val := range tree.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lower), bound.NewExcluded(upper))) {
-//	    fmt.Println(val) // Output: 5, 7
-//	}
 package btree
 
 import (
