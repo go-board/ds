@@ -1,30 +1,3 @@
-// Package btreemap implements an ordered key-value map based on B-trees.
-// BTreeMap provides ordered operations and efficient range queries with logarithmic time complexity.
-// Thread safety for all operations depends on the implementation of the underlying B-tree.
-//
-// Example:
-//
-//	// Create a new string-to-integer map
-//	m := btreemap.NewOrdered[string, int]()
-//
-//	// Insert a key-value pair
-//	_, updated := m.Insert("apple", 5)
-//	fmt.Println(updated) // false, because it's newly inserted
-//
-//	// Update an existing key
-//	oldValue, updated := m.Insert("apple", 10)
-//	fmt.Println(oldValue, updated) // 5 true
-//
-//	// Get a value
-//	val, found := m.Get("apple")
-//	if found {
-//		fmt.Println(val) // 10
-//	}
-//
-//	// Iterate through all key-value pairs (sorted by key)
-//	for k, v := range m.IterAsc() {
-//		fmt.Printf("%s: %d\n", k, v)
-//	}
 package btreemap
 
 import (

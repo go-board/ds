@@ -7,28 +7,32 @@ import (
 )
 
 // Keys returns an iterator over all keys in the hash map.
-// Return value:
-//   - Iterator over keys, of type iter.Seq[K]
 //
-// Time complexity: O(n) for iterating all elements
+// Returns:
+//   - An iter.Seq[K] that yields all keys.
+//
+// Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) Keys() iter.Seq[K] {
 	return diter.Keys(hm.Iter())
 }
 
 // Values returns an iterator over all values in the hash map.
-// Return value:
-//   - Iterator over values, of type iter.Seq[V]
 //
-// Time complexity: O(n) for iterating all elements
+// Returns:
+//   - An iter.Seq[V] that yields all values.
+//
+// Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) Values() iter.Seq[V] {
 	return diter.Values(hm.Iter())
 }
 
 // ValuesMut returns a mutable iterator over all values in the hash map.
-// Return value:
-//   - Iterator over mutable values, of type iter.Seq[*V]
 //
-// Time complexity: O(n) for iterating all elements
+// Returns:
+//   - An iter.Seq[*V] that yields pointers to all values.
+//   - The yielded values can be modified in place.
+//
+// Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) ValuesMut() iter.Seq[*V] {
 	return diter.Values(hm.IterMut())
 }
@@ -48,10 +52,11 @@ func (hm *HashMap[K, V, H]) iterNode() iter.Seq[*node[K, V]] {
 }
 
 // Iter returns an iterator over all key-value pairs in the hash map.
-// Return value:
-//   - Iterator over key-value pairs, of type iter.Seq2[K, V]
 //
-// Time complexity: O(n) for iterating all elements
+// Returns:
+//   - An iter.Seq2[K, V] that yields (key, value) pairs.
+//
+// Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) Iter() iter.Seq2[K, V] {
 	return diter.Split(hm.iterNode(), func(n *node[K, V]) (K, V) {
 		return n.key, n.value
@@ -59,25 +64,25 @@ func (hm *HashMap[K, V, H]) Iter() iter.Seq2[K, V] {
 }
 
 // IterMut returns a mutable iterator over all key-value pairs in the hash map.
-// Return value:
-//   - Mutable iterator over key-value pairs, of type iter.Seq2[K, *V]
 //
-// Behavior:
-//   - Allows modifying values during iteration
+// Returns:
+//   - An iter.Seq2[K, *V] that yields (key, pointer to value) pairs.
+//   - The yielded values can be modified in place.
 //
-// Time complexity: O(n) for iterating all elements
+// Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) IterMut() iter.Seq2[K, *V] {
 	return diter.Split(hm.iterNode(), func(n *node[K, V]) (K, *V) {
 		return n.key, &n.value
 	})
 }
 
-// Extend adds another iterable key-value pair collection to the current hash map.
+// Extend inserts all key/value pairs from the iterator into the map.
+//
 // Parameters:
-//   - it: Iterator providing key-value pairs
+//   - it: An iterator yielding key/value pairs to insert.
 //
 // Behavior:
-//   - For each key-value pair, if the key exists, update its value; otherwise add a new key-value pair
+//   - If a key already exists, its value will be updated.
 func (hm *HashMap[K, V, H]) Extend(it iter.Seq2[K, V]) {
 	if hm.deletedCount > hm.size {
 		hm.Compact()

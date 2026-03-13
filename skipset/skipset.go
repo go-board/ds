@@ -1,29 +1,3 @@
-// Package skipset implements a sorted set based on skip lists.
-// SkipSet provides efficient member checking, insertion, and deletion operations with time complexity close to O(log n).
-// Thread safety depends on the usage scenario; concurrent safety is not guaranteed by default.
-// SkipSet is implemented based on skipmap, internally using SkipMap to store elements with an empty struct as the value type.
-//
-// Example:
-//
-//	// Create a new set for string elements
-//	s := skipset.NewOrdered[string]()
-//
-//	// Insert an element
-//	added := s.Insert("apple")
-//	fmt.Println(added) // true, because it's newly inserted
-//
-//	// Insert the same element again
-//	added = s.Insert("apple")
-//	fmt.Println(added) // false, because the element already exists
-//
-//	// Check if an element exists
-//	exists := s.Contains("apple")
-//	fmt.Println(exists) // true
-//
-//	// Iterate through all elements (in order)
-//	for val := range s.IterAsc() {
-//		fmt.Println(val)
-//	}
 package skipset
 
 import (

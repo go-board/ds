@@ -4,13 +4,13 @@ import (
 	"iter"
 )
 
-// Extend adds elements from another iterable collection to the current set.
+// Extend inserts all elements from the iterator into the set.
 //
 // Parameters:
+//   - it: An iterator yielding elements to insert.
 //
-//	iter: Iterator providing elements to add
-//
-// For each element in the iterator, it is added only if it does not already exist in the current set.
+// Behavior:
+//   - Elements are only added if they don't already exist in the set.
 func (hs *HashSet[E, H]) Extend(it iter.Seq[E]) {
 	for e := range it {
 		hs.Insert(e)
@@ -19,9 +19,11 @@ func (hs *HashSet[E, H]) Extend(it iter.Seq[E]) {
 
 // Iter returns an iterator over all elements in the set.
 //
-// Return value:
+// Returns:
+//   - An iter.Seq[E] that yields all elements.
+//   - Order is non-deterministic (hash order).
 //
-//	Iterator generating all elements in the set, with non-deterministic order
+// Time Complexity: O(n)
 func (hs *HashSet[E, H]) Iter() iter.Seq[E] {
 	return hs.table.Keys()
 }

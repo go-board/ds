@@ -1,30 +1,3 @@
-// Package skipmap implements ordered key-value mapping based on skip lists.
-// SkipMap provides ordered operations and efficient query performance with time complexity approaching O(log n).
-// Thread safety for all operations depends on usage scenarios; no concurrency safety is guaranteed by default.
-//
-// Example:
-//
-//	// Create a new string-to-integer map
-//	m := skipmap.NewOrdered[string, int]()
-//
-//	// Insert a key-value pair
-//	_, updated := m.Insert("apple", 5)
-//	fmt.Println(updated) // false, because it's a new insertion
-//
-//	// Update an existing key
-//	oldValue, updated := m.Insert("apple", 10)
-//	fmt.Println(oldValue, updated) // 5 true
-//
-//	// Get a value
-//	val, found := m.Get("apple")
-//	if found {
-//		fmt.Println(val) // 10
-//	}
-//
-//	// Iterate over all key-value pairs (sorted by key)
-//	for k, v := range m.IterAsc() {
-//		fmt.Printf("%s: %d\n", k, v)
-//	}
 package skipmap
 
 import (
@@ -40,10 +13,8 @@ const (
 	p = 0.5
 )
 
-var (
-	// Random number generator
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
-)
+// Random number generator
+var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // node represents a node in the skip list
 // Each node contains a key, a value, and an array of pointers to subsequent nodes
@@ -532,7 +503,7 @@ func (sm *SkipMap[K, V]) PopLast() (k K, v V, found bool) {
 	}
 
 	// First find the last node from level 0
-	var last *node[K, V] = sm.head.next[0]
+	last := sm.head.next[0]
 
 	// Traverse to the last node
 	for last != nil && last.next[0] != nil {

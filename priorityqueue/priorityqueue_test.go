@@ -4,24 +4,9 @@ import (
 	"testing"
 )
 
-// Integer comparator function
-func intComparator(a, b int) int {
-	return a - b
-}
-
-// String comparator function
-func stringComparator(a, b string) int {
-	if a < b {
-		return -1
-	} else if a > b {
-		return 1
-	}
-	return 0
-}
-
 // TestEmptyMinHeap tests empty min heap
 func TestEmptyMinHeap(t *testing.T) {
-	pq := NewMin(intComparator)
+	pq := NewMinOrdered[int]()
 
 	// Test empty queue properties
 	if !pq.IsEmpty() {
@@ -47,7 +32,7 @@ func TestEmptyMinHeap(t *testing.T) {
 
 // TestMinHeapOperations tests min heap basic operations
 func TestMinHeapOperations(t *testing.T) {
-	pq := NewMin(intComparator)
+	pq := NewMinOrdered[int]()
 
 	// Insert elements
 	pq.Push(5)
@@ -89,7 +74,7 @@ func TestMinHeapOperations(t *testing.T) {
 
 // TestMaxHeapOperations tests max heap basic operations
 func TestMaxHeapOperations(t *testing.T) {
-	pq := NewMax(intComparator)
+	pq := NewMaxOrdered[int]()
 
 	// Insert elements
 	pq.Push(5)
@@ -121,7 +106,7 @@ func TestMaxHeapOperations(t *testing.T) {
 
 // TestStringPriorityQueue tests string type priority queue
 func TestStringPriorityQueue(t *testing.T) {
-	pq := NewMin(stringComparator)
+	pq := NewMinOrdered[string]()
 
 	// Insert strings
 	strings := []string{"banana", "apple", "cherry", "date", "elderberry"}
@@ -141,10 +126,10 @@ func TestStringPriorityQueue(t *testing.T) {
 
 // TestClearOperation tests Clear method
 func TestClearOperation(t *testing.T) {
-	pq := NewMin(intComparator)
+	pq := NewMinOrdered[int]()
 
 	// Insert some elements
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pq.Push(i)
 	}
 
@@ -163,7 +148,7 @@ func TestClearOperation(t *testing.T) {
 
 // TestMixedOperations tests mixed operations
 func TestMixedOperations(t *testing.T) {
-	pq := NewMin(intComparator)
+	pq := NewMinOrdered[int]()
 
 	// Test mixed push and pop operations
 	pq.Push(10)
@@ -201,7 +186,7 @@ func TestMixedOperations(t *testing.T) {
 
 // TestLargeData tests large amount of data
 func TestLargeData(t *testing.T) {
-	pq := NewMin(intComparator)
+	pq := NewMinOrdered[int]()
 	const size = 1000
 
 	// Insert large number of elements
@@ -215,7 +200,7 @@ func TestLargeData(t *testing.T) {
 	}
 
 	// Verify pop order
-	for i := 0; i < size; i++ {
+	for i := range size {
 		val, found := pq.Pop()
 		if !found || val != i {
 			t.Errorf("Pop #%d expected %d, got %d", i, i, val)

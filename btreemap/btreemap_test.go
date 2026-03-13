@@ -1,23 +1,14 @@
 package btreemap
 
 import (
-	"github.com/go-board/ds/bound"
 	"testing"
-)
 
-func intComparator(a, b int) int {
-	if a < b {
-		return -1
-	}
-	if a > b {
-		return 1
-	}
-	return 0
-}
+	"github.com/go-board/ds/bound"
+)
 
 // TestBTreeMapBasic validates insert, lookup, update, and delete behavior.
 func TestBTreeMapBasic(t *testing.T) {
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
 	m.Insert(3, "three")
 	m.Insert(1, "one")
@@ -82,9 +73,9 @@ func TestBTreeMapBasic(t *testing.T) {
 
 // TestBTreeMapClear verifies that Clear removes all entries and resets size.
 func TestBTreeMapClear(t *testing.T) {
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		m.Insert(i, string(rune(i+'a')))
 	}
 
@@ -103,26 +94,6 @@ func TestBTreeMapClear(t *testing.T) {
 	}
 }
 
-// collectKeys drains a key iterator into a slice for assertions.
-func collectKeysAsc(keysIter func(func(int) bool)) []int {
-	var keys []int
-	keysIter(func(k int) bool {
-		keys = append(keys, k)
-		return true
-	})
-	return keys
-}
-
-// collectValues drains a value iterator into a slice for assertions.
-func collectValuesAsc(valuesIter func(func(string) bool)) []string {
-	var values []string
-	valuesIter(func(v string) bool {
-		values = append(values, v)
-		return true
-	})
-	return values
-}
-
 // TestBTreeMapEntryAndEntries checks entry materialization and ordering.
 func TestBTreeMapEntryAndEntries(t *testing.T) {
 	entry := node[int, string]{Key: 42, Value: "answer"}
@@ -130,7 +101,7 @@ func TestBTreeMapEntryAndEntries(t *testing.T) {
 		t.Errorf("node creation failed, expected (42, 'answer'), got (%v, %v)", entry.GetKey(), entry.GetValue())
 	}
 
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
 	m.Insert(3, "three")
 	m.Insert(1, "one")
@@ -163,7 +134,7 @@ func TestBTreeMapEntryAndEntries(t *testing.T) {
 		}
 	}
 
-	emptyMap := New[int, string](intComparator)
+	emptyMap := NewOrdered[int, string]()
 	emptyEntriesCount := 0
 	for range emptyMap.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
 		emptyEntriesCount++
@@ -175,7 +146,7 @@ func TestBTreeMapEntryAndEntries(t *testing.T) {
 
 // TestBTreeMapRangeEntries validates bounded and unbounded range scans.
 func TestBTreeMapRangeEntries(t *testing.T) {
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
 	for i := 1; i <= 10; i++ {
 		m.Insert(i, "value-"+string(rune('0'+i)))
@@ -227,7 +198,7 @@ func TestBTreeMapRangeEntries(t *testing.T) {
 
 // TestBTreeMapEntryAPI exercises the Entry API contract for present/missing keys.
 func TestBTreeMapEntryAPI(t *testing.T) {
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
 	entry1 := m.Entry(10)
 	if m.ContainsKey(10) {
@@ -323,7 +294,7 @@ func TestBTreeMapEntryAPI(t *testing.T) {
 
 // TestBTreeMapForEach verifies in-order iteration over all entries.
 func TestBTreeMapForEach(t *testing.T) {
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
 	m.Insert(3, "three")
 	m.Insert(1, "one")
@@ -363,7 +334,7 @@ func TestBTreeMapForEach(t *testing.T) {
 
 // TestBTreeMapRange verifies full scan and early termination behavior.
 func TestBTreeMapRangeAsc(t *testing.T) {
-	m := New[int, string](intComparator)
+	m := NewOrdered[int, string]()
 
 	for i := 1; i <= 5; i++ {
 		m.Insert(i, string(rune(i+'a'-1)))
@@ -422,13 +393,19 @@ func TestBTreeMapRangeAsc(t *testing.T) {
 			t.Errorf("Expected key %d at position %d, got %d", expectedKeys[i], i, k)
 		}
 	}
+
+	for i, v := range values {
+		if v != expectedValues[i] {
+			t.Errorf("Expected value %s at position %d, got %s", expectedValues[i], i, v)
+		}
+	}
 }
 
 // TestBTreeMapLargeDataSet provides a coarse regression check on larger input sizes.
 func TestBTreeMapLargeDataSet(t *testing.T) {
-	m := New[int, int](intComparator)
+	m := NewOrdered[int, int]()
 
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		m.Insert(i, i*10)
 	}
 
@@ -451,7 +428,7 @@ func TestBTreeMapLargeDataSet(t *testing.T) {
 		t.Errorf("Expected size 500 after deleting even keys, got %d", m.Len())
 	}
 
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		_, found := m.Get(i)
 		if i%2 == 0 && found {
 			t.Errorf("Expected key %d to be deleted", i)
@@ -459,16 +436,6 @@ func TestBTreeMapLargeDataSet(t *testing.T) {
 			t.Errorf("Expected key %d to exist", i)
 		}
 	}
-}
-
-// collectStringKeys drains a string-key iterator into a slice for assertions.
-func collectStringKeysAsc(keysIter func(func(string) bool)) []string {
-	var keys []string
-	keysIter(func(k string) bool {
-		keys = append(keys, k)
-		return true
-	})
-	return keys
 }
 
 func TestBTreeMapGetComparator(t *testing.T) {

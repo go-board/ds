@@ -6,13 +6,15 @@ import (
 	"github.com/go-board/ds/bound"
 )
 
-// RangeAsc returns an ascending iterator that traverses elements in [lowerBound, upperBound).
+// RangeAsc returns an iterator that traverses elements within the given bounds in ascending order.
+//
 // Parameters:
-//   - lowerBound: The lower bound of the range (inclusive); if nil, no lower bound.
-//   - upperBound: The upper bound of the range (exclusive); if nil, no upper bound.
+//   - bounds: The range bounds specifying the lower and upper limits.
 //
 // Returns:
-//   - An iter.Seq[E] iterator that yields all elements in ascending order within the range.
+//   - An iter.Seq[E] that yields elements in ascending order within the specified bounds.
+//
+// Time Complexity: O(log n + k) where k is the number of elements in the range.
 func (bt *BTree[E]) RangeAsc(bounds bound.RangeBounds[E]) iter.Seq[E] {
 	lowerBound, upperBound := coarseBounds(bounds)
 	return func(yield func(E) bool) {
@@ -28,20 +30,25 @@ func (bt *BTree[E]) RangeAsc(bounds bound.RangeBounds[E]) iter.Seq[E] {
 	}
 }
 
-// IterAsc returns an ascending iterator that traverses all elements in the BTree.
+// IterAsc returns an iterator that traverses all elements in ascending order.
+//
 // Returns:
-//   - An iter.Seq[E] iterator that yields all elements in ascending order.
+//   - An iter.Seq[E] that yields all elements in ascending order.
+//
+// Time Complexity: O(n)
 func (bt *BTree[E]) IterAsc() iter.Seq[E] {
 	return bt.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[E](), bound.NewUnbounded[E]()))
 }
 
-// RangeDesc returns a descending iterator that traverses elements in [lowerBound, upperBound).
+// RangeDesc returns an iterator that traverses elements within the given bounds in descending order.
+//
 // Parameters:
-//   - lowerBound: inclusive lower bound; nil means unbounded.
-//   - upperBound: exclusive upper bound; nil means unbounded.
+//   - bounds: The range bounds specifying the lower and upper limits.
 //
 // Returns:
-//   - An iter.Seq[E] iterator that yields elements in descending order within the range.
+//   - An iter.Seq[E] that yields elements in descending order within the specified bounds.
+//
+// Time Complexity: O(log n + k) where k is the number of elements in the range.
 func (bt *BTree[E]) RangeDesc(bounds bound.RangeBounds[E]) iter.Seq[E] {
 	lowerBound, upperBound := coarseBounds(bounds)
 	return func(yield func(E) bool) {
@@ -69,9 +76,12 @@ func coarseBounds[E any](bounds bound.RangeBounds[E]) (lower, upper *E) {
 	return
 }
 
-// IterDesc returns a descending iterator that walks all elements from back to front.
+// IterDesc returns an iterator that traverses all elements in descending order.
+//
 // Returns:
-//   - An iter.Seq[E] iterator that yields all elements in descending order.
+//   - An iter.Seq[E] that yields all elements in descending order.
+//
+// Time Complexity: O(n)
 func (bt *BTree[E]) IterDesc() iter.Seq[E] {
 	return func(yield func(E) bool) {
 		if bt.root == nil {

@@ -1,34 +1,3 @@
-// Package arraystack implements a generic stack data structure using ArrayDeque as the underlying storage.
-//
-// ArrayStack provides O(1) time complexity for push and pop operations, and efficient
-// memory usage through the dynamic resizing capabilities of ArrayDeque. It supports all standard stack operations
-// and provides iterators for element traversal.
-//
-// Example:
-//
-//	// Create a new stack for integers
-//	stack := arraystack.New[int]()
-//
-//	// Push elements onto the stack
-//	stack.Push(5)
-//	stack.Push(3)
-//
-//	// Check if the stack is empty
-//	isEmpty := stack.IsEmpty() // false
-//
-//	// Get the number of elements
-//	size := stack.Len() // 2
-//
-//	// Peek at the top element without removing it
-//	top, found := stack.Peek() // 3, true
-//
-//	// Pop an element from the stack
-//	element, found := stack.Pop() // 3, true
-//
-//	// Iterate through elements (LIFO order)
-//	for val := range stack.Iter() {
-//		fmt.Println(val)
-//	}
 package arraystack
 
 import (

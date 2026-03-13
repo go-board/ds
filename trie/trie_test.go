@@ -6,14 +6,7 @@ import (
 
 // TestTrieMapBasicOperations validates core insert/get/remove flows.
 func TestTrieMapBasicOperations(t *testing.T) {
-	tm := New[string, string](func(a, b string) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+	tm := NewOrdered[string, string]()
 
 	keys := [][]string{
 		{"a"},
@@ -70,14 +63,7 @@ func TestTrieMapBasicOperations(t *testing.T) {
 
 // TestTrieMapPrefixMatching validates prefix-based key and value lookups.
 func TestTrieMapPrefixMatching(t *testing.T) {
-	tm := New[string, string](func(a, b string) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+	tm := NewOrdered[string, string]()
 
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
@@ -150,14 +136,7 @@ func TestTrieMapPrefixMatching(t *testing.T) {
 
 // TestTrieMapIterators verifies full-map, prefix, and mutable iterator behavior.
 func TestTrieMapIterators(t *testing.T) {
-	tm := New[string, string](func(a, b string) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+	tm := NewOrdered[string, string]()
 
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
@@ -258,14 +237,7 @@ func TestTrieMapIterators(t *testing.T) {
 
 // TestTrieMapDelete covers leaf, internal, and missing-key delete paths.
 func TestTrieMapDelete(t *testing.T) {
-	tm := New[string, string](func(a, b string) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+	tm := NewOrdered[string, string]()
 
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
@@ -320,14 +292,7 @@ func TestTrieMapDelete(t *testing.T) {
 
 // TestTrieMapClone verifies clone completeness and deep-copy semantics.
 func TestTrieMapClone(t *testing.T) {
-	tm := New[string, string](func(a, b string) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+	tm := NewOrdered[string, string]()
 
 	tm.Insert([]string{"a"}, "a")
 	tm.Insert([]string{"a", "b"}, "ab")
@@ -389,14 +354,7 @@ func collectSeq[V any](seq func(func(V) bool)) []V {
 
 // TestTrieMapEntryAPI tests the Entry API of TrieMap
 func TestTrieMapEntryAPI(t *testing.T) {
-	tm := New[string, string](func(a, b string) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+	tm := NewOrdered[string, string]()
 
 	entry := tm.Entry([]string{"a"})
 	val, found := entry.Get()

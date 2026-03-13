@@ -13,7 +13,7 @@ func newIntHasher() hashutil.Default[int] {
 }
 
 func TestHashSetBasicOperations(t *testing.T) {
-	set := New[int](newIntHasher())
+	set := New(newIntHasher())
 
 	if !set.IsEmpty() || set.Len() != 0 {
 		t.Fatal("New set should be empty")
@@ -31,7 +31,7 @@ func TestHashSetBasicOperations(t *testing.T) {
 		t.Fatal("Remove behavior unexpected")
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		set.Insert(i)
 	}
 
@@ -45,9 +45,9 @@ func TestHashSetBasicOperations(t *testing.T) {
 }
 
 func TestHashSetIterExtendAndEntry(t *testing.T) {
-	set := New[int](newIntHasher())
+	set := New(newIntHasher())
 	seq := func(yield func(int) bool) {
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			if !yield(i) {
 				return
 			}
@@ -76,12 +76,12 @@ func TestHashSetIterExtendAndEntry(t *testing.T) {
 }
 
 func TestHashSetRelations(t *testing.T) {
-	base := New[int](newIntHasher())
+	base := New(newIntHasher())
 	for _, v := range []int{1, 2, 3} {
 		base.Insert(v)
 	}
 
-	other := New[int](newIntHasher())
+	other := New(newIntHasher())
 	for _, v := range []int{3, 4} {
 		other.Insert(v)
 	}
@@ -118,9 +118,9 @@ func TestHashSetRelations(t *testing.T) {
 // New test case: Test IsSubset function with all branches
 func TestHashSetIsSubsetAllBranches(t *testing.T) {
 	// Create test sets
-	set1 := New[int](newIntHasher())
-	set2 := New[int](newIntHasher())
-	set3 := New[int](newIntHasher())
+	set1 := New(newIntHasher())
+	set2 := New(newIntHasher())
+	set3 := New(newIntHasher())
 
 	// Insert elements
 	for _, v := range []int{1, 2, 3, 4, 5} {
@@ -151,7 +151,7 @@ func TestHashSetIsSubsetAllBranches(t *testing.T) {
 	}
 
 	// Test that empty set is a subset of any set
-	emptySet := New[int](newIntHasher())
+	emptySet := New(newIntHasher())
 	if !emptySet.IsSubset(set1) {
 		t.Error("Empty set should be a subset of any set")
 	}
@@ -165,9 +165,9 @@ func TestHashSetIsSubsetAllBranches(t *testing.T) {
 // New test case: Test IsDisjoint function with all branches
 func TestHashSetIsDisjointAllBranches(t *testing.T) {
 	// Create test sets
-	set1 := New[int](newIntHasher())
-	set2 := New[int](newIntHasher())
-	set3 := New[int](newIntHasher())
+	set1 := New(newIntHasher())
+	set2 := New(newIntHasher())
+	set3 := New(newIntHasher())
 
 	// Insert elements
 	for _, v := range []int{1, 2, 3, 4, 5} {
@@ -193,21 +193,21 @@ func TestHashSetIsDisjointAllBranches(t *testing.T) {
 	}
 
 	// Test that empty set is disjoint with any set
-	emptySet := New[int](newIntHasher())
+	emptySet := New(newIntHasher())
 	if !emptySet.IsDisjoint(set1) {
 		t.Error("Empty set should be disjoint with any set")
 	}
 
 	// Test two empty sets
-	emptySet2 := New[int](newIntHasher())
+	emptySet2 := New(newIntHasher())
 	if !emptySet.IsDisjoint(emptySet2) {
 		t.Error("Two empty sets should be disjoint")
 	}
 }
 
 func TestHashSetEqual(t *testing.T) {
-	a := New[int](newIntHasher())
-	b := New[int](newIntHasher())
+	a := New(newIntHasher())
+	b := New(newIntHasher())
 	for _, v := range []int{1, 2, 3} {
 		a.Insert(v)
 		b.Insert(v)
@@ -221,7 +221,7 @@ func TestHashSetEqual(t *testing.T) {
 		t.Fatal("sets with different lengths should not be equal")
 	}
 
-	c := New[int](newIntHasher())
+	c := New(newIntHasher())
 	for _, v := range []int{1, 2, 4} {
 		c.Insert(v)
 	}

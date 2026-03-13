@@ -1,39 +1,36 @@
-// Package arraystack implements a generic stack data structure using ArrayDeque as the underlying storage.
 package arraystack
 
 import (
 	"iter"
 )
 
-// Iter returns a sequential [iter.Seq] over the elements in LIFO (Last-In-First-Out) order
+// Iter returns an iterator over all elements in LIFO (last-in-first-out) order.
 //
 // Returns:
+//   - An iter.Seq[T] that yields elements in LIFO order.
 //
-//	An iterator that yields elements in LIFO order
-//
-// Time Complexity: O(n) for full iteration
+// Time Complexity: O(n)
 func (s *ArrayStack[T]) Iter() iter.Seq[T] {
 	return s.deque.IterBack()
 }
 
-// IterMut returns a mutable [iter.Seq] over the elements in LIFO (Last-In-First-Out) order
+// IterMut returns a mutable iterator over all elements in LIFO order.
 //
 // Returns:
+//   - An iter.Seq[*T] that yields pointers to elements in LIFO order.
+//   - The yielded values can be modified in place.
 //
-//	An iterator that yields pointers to elements in LIFO order, allowing modification
-//
-// Time Complexity: O(n) for full iteration
+// Time Complexity: O(n)
 func (s *ArrayStack[T]) IterMut() iter.Seq[*T] {
 	return s.deque.IterBackMut()
 }
 
-// Extend adds multiple elements to the top of the stack in the order they are provided
+// Extend pushes all elements from the iterator onto the stack.
 //
 // Parameters:
+//   - it: An iterator yielding elements to push onto the stack.
 //
-//	values: An [iter.Seq] of elements to push onto the stack
-//
-// Time Complexity: O(n) where n is the number of elements to add, amortized
+// Time Complexity: O(n) amortized
 func (s *ArrayStack[T]) Extend(it iter.Seq[T]) {
 	s.deque.Extend(it)
 }

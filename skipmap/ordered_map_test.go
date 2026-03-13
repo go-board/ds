@@ -1,8 +1,9 @@
 package skipmap
 
 import (
-	"github.com/go-board/ds/bound"
 	"testing"
+
+	"github.com/go-board/ds/bound"
 )
 
 // TestSkipMapOrderedMapMethods tests the OrderedMap methods added to SkipMap
@@ -48,7 +49,7 @@ func TestSkipMapOrderedMapMethods(t *testing.T) {
 	t.Run("IterDesc", func(t *testing.T) {
 		expectedKeys := []string{"e", "d", "c", "b", "a"}
 		var actualKeys []string
-		for k, _ := range m.IterDesc() {
+		for k := range m.IterDesc() {
 			actualKeys = append(actualKeys, k)
 		}
 

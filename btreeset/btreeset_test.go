@@ -5,19 +5,9 @@ import (
 	"testing"
 )
 
-// Integer comparison function
-func intComparator(a, b int) int {
-	if a < b {
-		return -1
-	} else if a > b {
-		return 1
-	}
-	return 0
-}
-
 // Test basic functionality
 func TestBTreeSetBasic(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Test insertion and size
 	if !set.Insert(1) {
@@ -62,7 +52,7 @@ func TestBTreeSetBasic(t *testing.T) {
 
 // Test empty set
 func TestBTreeSetEmpty(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	if !set.IsEmpty() {
 		t.Errorf("New set should be empty")
@@ -89,7 +79,7 @@ func TestBTreeSetEmpty(t *testing.T) {
 
 // Test Clear method
 func TestBTreeSetClear(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Add elements
 	set.Insert(1)
@@ -119,7 +109,7 @@ func TestBTreeSetClear(t *testing.T) {
 
 // Test iterator
 func TestBTreeSetIterAsc(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Add elements (added out of order, but should iterate in ascending order)
 	set.Insert(5)
@@ -150,8 +140,8 @@ func TestBTreeSetIterAsc(t *testing.T) {
 // Test set operations
 func TestBTreeSetOperations(t *testing.T) {
 	// Create two sets
-	set1 := New(intComparator)
-	set2 := New(intComparator)
+	set1 := NewOrdered[int]()
+	set2 := NewOrdered[int]()
 
 	// Add elements
 	for _, v := range []int{1, 2, 3, 4, 5} {
@@ -182,7 +172,7 @@ func TestBTreeSetOperations(t *testing.T) {
 	verifySetContent(t, symmetricDifference, expectedSymDiff, "SymmetricDifference")
 
 	// Test subset
-	subset := New(intComparator)
+	subset := NewOrdered[int]()
 	for _, v := range []int{3, 4} {
 		subset.Insert(v)
 	}
@@ -202,7 +192,7 @@ func TestBTreeSetOperations(t *testing.T) {
 	}
 
 	// Test disjoint
-	disjoint := New(intComparator)
+	disjoint := NewOrdered[int]()
 	for _, v := range []int{8, 9} {
 		disjoint.Insert(v)
 	}
@@ -216,7 +206,7 @@ func TestBTreeSetOperations(t *testing.T) {
 
 // Test Extend method
 func TestBTreeSetExtend(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Create a sequence for extension
 	slice := []int{5, 1, 3, 2, 4}
@@ -231,7 +221,7 @@ func TestBTreeSetExtend(t *testing.T) {
 
 // Test Clone method
 func TestBTreeSetClone(t *testing.T) {
-	set1 := New(intComparator)
+	set1 := NewOrdered[int]()
 	for _, v := range []int{1, 2, 3, 4, 5} {
 		set1.Insert(v)
 	}
@@ -252,7 +242,7 @@ func TestBTreeSetClone(t *testing.T) {
 
 // Test First and Last methods
 func TestBTreeSetFirstLast(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Test empty set
 	val, found := set.First()
@@ -297,7 +287,7 @@ func TestBTreeSetFirstLast(t *testing.T) {
 
 // Test PopFirst and PopLast methods
 func TestBTreeSetPopFirstLast(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Add elements
 	for _, v := range []int{5, 2, 7, 1, 3} {
@@ -360,7 +350,7 @@ func TestBTreeSetPopFirstLast(t *testing.T) {
 
 // Test Range method
 func TestBTreeSetRangeAsc(t *testing.T) {
-	set := New(intComparator)
+	set := NewOrdered[int]()
 
 	// Add elements
 	for i := 1; i <= 10; i++ {
@@ -477,8 +467,8 @@ func verifySetContent[T comparable](t *testing.T, set *BTreeSet[T], expected []T
 }
 
 func TestBTreeSetEqual(t *testing.T) {
-	a := New(intComparator)
-	b := New(intComparator)
+	a := NewOrdered[int]()
+	b := NewOrdered[int]()
 	for _, v := range []int{1, 2, 3} {
 		a.Insert(v)
 		b.Insert(v)
@@ -492,7 +482,7 @@ func TestBTreeSetEqual(t *testing.T) {
 		t.Fatal("sets with different sizes should not be equal")
 	}
 
-	c := New(intComparator)
+	c := NewOrdered[int]()
 	for _, v := range []int{1, 2, 4} {
 		c.Insert(v)
 	}
