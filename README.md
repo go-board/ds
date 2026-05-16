@@ -38,6 +38,7 @@ go get github.com/go-board/ds
 |---|---|
 | Linear containers | `ArrayDeque`, `ArrayStack`, `LinkedList` |
 | Heap/queue | `PriorityQueue` |
+| Ordered slice map/set | `ArrayMap`, `ArraySet` |
 | Unordered map/set | `HashMap`, `HashSet` |
 | Ordered tree map/set | `BTree`, `BTreeMap`, `BTreeSet` |
 | Ordered skip-list map/set | `SkipMap`, `SkipSet` |
@@ -52,12 +53,17 @@ go get github.com/go-board/ds
 package main
 
 import (
+	"cmp"
 	"fmt"
 
 	"github.com/go-board/ds"
 )
 
 func main() {
+	// ArrayMap (ordered, slice-based)
+	am := ds.NewArrayMap[string, int](cmp.Compare[string])
+	am.Insert("apple", 3)
+
 	// HashMap (unordered)
 	hm := ds.NewComparableHashMap[string, int]()
 	hm.Insert("apple", 3)
