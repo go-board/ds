@@ -4,6 +4,7 @@ import (
 	"iter"
 
 	diter "github.com/go-board/ds/internal/iter"
+	"github.com/go-board/ds/internal/kv"
 )
 
 // Keys returns an iterator over all keys in the hash map.
@@ -37,14 +38,12 @@ func (hm *HashMap[K, V, H]) ValuesMut() iter.Seq[*V] {
 	return diter.Values(hm.IterMut())
 }
 
-func (hm *HashMap[K, V, H]) iterNode() iter.Seq[*node[K, V]] {
-	return func(yield func(*node[K, V]) bool) {
+func (hm *HashMap[K, V, H]) iterNode() iter.Seq[*kv.Pair[K, V]] {
+	return func(yield func(*kv.Pair[K, V]) bool) {
 		for _, bucket := range hm.buckets {
-			for _, node := range bucket.nodes {
-				if !node.deleted {
-					if !yield(node) {
-						return
-					}
+			for i := range bucket.nodes {
+				if !yield(&bucket.nodes[i]) {
+					return
 				}
 			}
 		}
@@ -58,9 +57,7 @@ func (hm *HashMap[K, V, H]) iterNode() iter.Seq[*node[K, V]] {
 //
 // Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) Iter() iter.Seq2[K, V] {
-	return diter.Split(hm.iterNode(), func(n *node[K, V]) (K, V) {
-		return n.key, n.value
-	})
+	return diter.Split(hm.iterNode(), (*kv.Pair[K, V]).KV)
 }
 
 // IterMut returns a mutable iterator over all key-value pairs in the hash map.
@@ -71,9 +68,7 @@ func (hm *HashMap[K, V, H]) Iter() iter.Seq2[K, V] {
 //
 // Time Complexity: O(n)
 func (hm *HashMap[K, V, H]) IterMut() iter.Seq2[K, *V] {
-	return diter.Split(hm.iterNode(), func(n *node[K, V]) (K, *V) {
-		return n.key, &n.value
-	})
+	return diter.Split(hm.iterNode(), (*kv.Pair[K, V]).KVMut)
 }
 
 // Extend inserts all key/value pairs from the iterator into the map.
@@ -84,9 +79,6 @@ func (hm *HashMap[K, V, H]) IterMut() iter.Seq2[K, *V] {
 // Behavior:
 //   - If a key already exists, its value will be updated.
 func (hm *HashMap[K, V, H]) Extend(it iter.Seq2[K, V]) {
-	if hm.deletedCount > hm.size {
-		hm.Compact()
-	}
 	for k, v := range it {
 		hm.Insert(k, v)
 	}

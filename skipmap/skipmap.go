@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"math/rand"
 	"time"
+
+	"github.com/go-board/ds/internal/kv"
 )
 
 const (
@@ -22,9 +24,8 @@ var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 // Higher levels have fewer nodes and are used to accelerate lookups
 
 type node[K, V any] struct {
-	Key   K             // Key
-	Value V             // Value
-	next  []*node[K, V] // Array of pointers to subsequent nodes at each level
+	kv.Pair[K, V]
+	next []*node[K, V] // Array of pointers to subsequent nodes at each level
 }
 
 // newNode creates a new skip list node
@@ -37,18 +38,17 @@ type node[K, V any] struct {
 //   - Pointer to the newly created node
 func newNode[K, V any](key K, value V, level int) *node[K, V] {
 	return &node[K, V]{
-		Key:   key,
-		Value: value,
-		next:  make([]*node[K, V], level+1),
+		Pair: kv.NewPair(key, value),
+		next: make([]*node[K, V], level+1),
 	}
 }
 
 func (n *node[K, V]) kv() (K, V) {
-	return n.Key, n.Value
+	return n.KV()
 }
 
 func (n *node[K, V]) kvMut() (K, *V) {
-	return n.Key, &n.Value
+	return n.KVMut()
 }
 
 // SkipMap implements an ordered map based on skip lists.

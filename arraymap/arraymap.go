@@ -3,27 +3,15 @@ package arraymap
 import (
 	"cmp"
 	"iter"
+
+	"github.com/go-board/ds/internal/kv"
 )
-
-// pair stores one key-value item in ArrayMap.
-type pair[K any, V any] struct {
-	Key   K
-	Value V
-}
-
-func (p *pair[K, V]) kv() (K, V) {
-	return p.Key, p.Value
-}
-
-func (p *pair[K, V]) kvMut() (K, *V) {
-	return p.Key, &p.Value
-}
 
 // ArrayMap is an ordered map implementation backed by a sorted slice.
 //
 // Keys are ordered by the provided comparator.
 type ArrayMap[K any, V any] struct {
-	items      []pair[K, V]
+	items      []kv.Pair[K, V]
 	comparator func(K, K) int
 }
 
@@ -33,7 +21,7 @@ func New[K any, V any](comparator func(K, K) int) *ArrayMap[K, V] {
 		panic("comparator function cannot be nil")
 	}
 	return &ArrayMap[K, V]{
-		items:      make([]pair[K, V], 0),
+		items:      make([]kv.Pair[K, V], 0),
 		comparator: comparator,
 	}
 }
@@ -70,9 +58,9 @@ func (m *ArrayMap[K, V]) search(key K) (idx int, found bool) {
 }
 
 func (m *ArrayMap[K, V]) insertAt(idx int, key K, value V) {
-	m.items = append(m.items, pair[K, V]{})
+	m.items = append(m.items, kv.Pair[K, V]{})
 	copy(m.items[idx+1:], m.items[idx:])
-	m.items[idx] = pair[K, V]{Key: key, Value: value}
+	m.items[idx] = kv.NewPair(key, value)
 }
 
 // Insert inserts or updates a key-value pair.
@@ -146,7 +134,7 @@ func (m *ArrayMap[K, V]) Clear() {
 // Clone creates a shallow copy of the map.
 func (m *ArrayMap[K, V]) Clone() *ArrayMap[K, V] {
 	clone := &ArrayMap[K, V]{
-		items:      make([]pair[K, V], len(m.items)),
+		items:      make([]kv.Pair[K, V], len(m.items)),
 		comparator: m.comparator,
 	}
 	copy(clone.items, m.items)

@@ -1,86 +1,107 @@
 package hashmap
 
-import "github.com/go-board/ds/hashutil"
-
-// node represents a key-value pair node in the hash map
-type node[K, V any] struct {
-	key     K
-	value   V
-	deleted bool // Mark if the node is deleted (soft delete flag)
-}
+import (
+	"github.com/go-board/ds/hashutil"
+	"github.com/go-board/ds/internal/kv"
+)
 
 // Entry represents the state of a key in the hash map, which can be Occupied or Vacant
 type Entry[K, V any, H hashutil.Hasher[K]] struct {
-	hashMap *HashMap[K, V, H]
-	hash    uint64
-	key     K
-	node    *node[K, V] // nil indicates Vacant
+	hashMap  *HashMap[K, V, H]
+	hash     uint64
+	key      K
+	index    int
+	occupied bool
+}
+
+func (e Entry[K, V, H]) pair() *kv.Pair[K, V] {
+	if !e.occupied {
+		return nil
+	}
+
+	bucket := e.hashMap.buckets[e.hash]
+	if bucket == nil {
+		return nil
+	}
+
+	if e.index >= 0 && e.index < len(bucket.nodes) {
+		node := &bucket.nodes[e.index]
+		if e.hashMap.hasher.Equal(node.Key, e.key) {
+			return node
+		}
+	}
+
+	for i := range bucket.nodes {
+		node := &bucket.nodes[i]
+		if e.hashMap.hasher.Equal(node.Key, e.key) {
+			return node
+		}
+	}
+
+	return nil
 }
 
 // OrInsert inserts the value if the key doesn't exist, returns a mutable reference to the value
 func (e Entry[K, V, H]) OrInsert(defaultValue V) *V {
-	if e.node != nil {
+	if node := e.pair(); node != nil {
 		// Key exists, return reference to existing value
-		return &e.node.value
+		return &node.Value
 	}
 
 	// Key doesn't exist, insert new value
-	node := &node[K, V]{
-		key:     e.key,
-		value:   defaultValue,
-		deleted: false,
+	node := kv.Pair[K, V]{
+		Key:   e.key,
+		Value: defaultValue,
 	}
 	bucket := e.hashMap.getBucket(e.hash)
 	bucket.nodes = append(bucket.nodes, node)
 	e.hashMap.size++
-	return &node.value
+	return &bucket.nodes[len(bucket.nodes)-1].Value
 }
 
 // OrInsertWith creates and inserts a value using the function if the key doesn't exist, returns a mutable reference to the value
 func (e Entry[K, V, H]) OrInsertWith(defaultValueFn func() V) *V {
-	if e.node != nil {
+	if node := e.pair(); node != nil {
 		// Key exists, return reference to existing value
-		return &e.node.value
+		return &node.Value
 	}
 
 	// Key doesn't exist, create and insert new value using the function
 	defaultValue := defaultValueFn()
-	node := &node[K, V]{
-		key:     e.key,
-		value:   defaultValue,
-		deleted: false,
+	node := kv.Pair[K, V]{
+		Key:   e.key,
+		Value: defaultValue,
 	}
 	bucket := e.hashMap.getBucket(e.hash)
 	bucket.nodes = append(bucket.nodes, node)
 	e.hashMap.size++
-	return &node.value
+	return &bucket.nodes[len(bucket.nodes)-1].Value
 }
 
 // OrInsertWithKey creates and inserts a value using the key-related function if the key doesn't exist, returns a mutable reference to the value
 func (e Entry[K, V, H]) OrInsertWithKey(defaultValueFn func(K) V) *V {
-	if e.node != nil {
+	if node := e.pair(); node != nil {
 		// Key exists, return reference to existing value
-		return &e.node.value
+		return &node.Value
 	}
 
 	// Key doesn't exist, create and insert new value using the key-related function
 	defaultValue := defaultValueFn(e.key)
-	node := &node[K, V]{
-		key:     e.key,
-		value:   defaultValue,
-		deleted: false,
+	node := kv.Pair[K, V]{
+		Key:   e.key,
+		Value: defaultValue,
 	}
 	bucket := e.hashMap.getBucket(e.hash)
 	bucket.nodes = append(bucket.nodes, node)
 	e.hashMap.size++
-	return &node.value
+	return &bucket.nodes[len(bucket.nodes)-1].Value
 }
 
 // AndModify modifies the value if the key exists, returns Entry itself to support chaining
 func (e Entry[K, V, H]) AndModify(modifyFn func(*V)) Entry[K, V, H] {
-	if e.node != nil {
+	if node := e.pair(); node != nil {
 		// Key exists, modify the value
-		modifyFn(&e.node.value)
+		modifyFn(&node.Value)
 	}
 	return e
 }
@@ -89,34 +110,24 @@ func (e Entry[K, V, H]) AndModify(modifyFn func(*V)) Entry[K, V, H] {
 // If the key exists, returns the value and true; if not, returns zero value and false
 func (e Entry[K, V, H]) Get() (V, bool) {
 	var zero V
-	if e.node == nil {
+	node := e.pair()
+	if node == nil {
 		return zero, false
 	}
-	return e.node.value, true
+	return node.Value, true
 }
 
 // Insert inserts or updates the value and returns the old value if one existed.
 func (e Entry[K, V, H]) Insert(value V) (V, bool) {
-	if e.node != nil {
-		old := e.node.value
-		e.node.value = value
+	if node := e.pair(); node != nil {
+		old := node.Value
+		node.Value = value
 		return old, true
 	}
 
 	bucket := e.hashMap.getBucket(e.hash)
-	for _, n := range bucket.nodes {
-		if n.deleted && e.hashMap.hasher.Equal(n.key, e.key) {
-			old := n.value
-			n.deleted = false
-			n.value = value
-			e.hashMap.size++
-			e.hashMap.deletedCount--
-			return old, true
-		}
-	}
-
 	var zero V
-	bucket.nodes = append(bucket.nodes, &node[K, V]{key: e.key, value: value})
+	bucket.nodes = append(bucket.nodes, kv.Pair[K, V]{Key: e.key, Value: value})
 	e.hashMap.size++
 	return zero, false
 }

@@ -41,7 +41,6 @@ func TestHashSetBasicOperations(t *testing.T) {
 		t.Fatal("Clone should get independent copy, Clear should empty original set")
 	}
 
-	clone.Compact() // Just ensuring it doesn't panic
 }
 
 func TestHashSetIterExtendAndEntry(t *testing.T) {

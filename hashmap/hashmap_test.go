@@ -4,10 +4,12 @@ import (
 	"encoding/binary"
 	"hash/maphash"
 	"iter"
+	"reflect"
 	"slices"
 	"testing"
 
 	"github.com/go-board/ds/hashutil"
+	"github.com/go-board/ds/internal/kv"
 )
 
 type collisionHasher struct{}
@@ -62,15 +64,47 @@ func TestHashMapBasicOperations(t *testing.T) {
 	}
 }
 
-func TestHashMapCompactExtendAndIterators(t *testing.T) {
+func TestHashMapGetMutUpdatesValueInCollisionBucket(t *testing.T) {
+	hm := New[int, int](collisionHasher{})
+	for i := 0; i < 8; i++ {
+		hm.Insert(i, i*10)
+	}
+
+	ptr, ok := hm.GetMut(4)
+	if !ok || ptr == nil {
+		t.Fatal("GetMut should return a writable pointer for an existing key")
+	}
+	*ptr = 444
+
+	if value, ok := hm.Get(4); !ok || value != 444 {
+		t.Fatalf("GetMut pointer should update the stored value, got value=%d ok=%v", value, ok)
+	}
+}
+
+func TestHashMapBucketStoresPairsInline(t *testing.T) {
+	hm := New[int, int](collisionHasher{})
+	hm.Insert(1, 10)
+
+	hash := hm.hash(1)
+	bucket := hm.buckets[hash]
+	if bucket == nil || len(bucket.nodes) != 1 {
+		t.Fatal("Insert should create one bucket node")
+	}
+
+	got := reflect.TypeOf(bucket.nodes).Elem()
+	want := reflect.TypeOf(kv.Pair[int, int]{})
+	if got != want {
+		t.Fatalf("bucket nodes should store pairs inline, got element type %v want %v", got, want)
+	}
+}
+
+func TestHashMapExtendAndIterators(t *testing.T) {
 	hm := New[int, int](collisionHasher{})
 
 	hm.Insert(1, 10)
 	hm.Insert(2, 20)
 	hm.Remove(1)
-	hm.Insert(1, 30) // Reuse soft deleted node
-
-	hm.Compact()
+	hm.Insert(1, 30)
 
 	seqData := []struct {
 		k int
@@ -156,6 +190,24 @@ func TestHashMapEntryAPI(t *testing.T) {
 	}
 }
 
+func TestHashMapEntryExistingKeySurvivesBucketGrowth(t *testing.T) {
+	hm := New[int, int](collisionHasher{})
+	hm.Insert(0, 0)
+	entry := hm.Entry(0)
+
+	for i := 1; i < 64; i++ {
+		hm.Insert(i, i)
+	}
+
+	old, existed := entry.Insert(999)
+	if !existed || old != 0 {
+		t.Fatalf("Entry.Insert should update the original key after bucket growth, got old=%d existed=%v", old, existed)
+	}
+	if value, ok := hm.Get(0); !ok || value != 999 {
+		t.Fatalf("Entry.Insert should update the stored value, got value=%d ok=%v", value, ok)
+	}
+}
+
 func TestHashMapEdgeCases(t *testing.T) {
 	hm := New[int, int](collisionHasher{})
 	hm.Insert(1, 10)
@@ -177,13 +229,11 @@ func TestHashMapEdgeCases(t *testing.T) {
 		t.Fatal("GetMut for deleted key should return nil")
 	}
 
-	// Trigger Compact
 	hm.Insert(3, 30)
 	if hm.Len() != 1 {
-		t.Fatalf("Element count should be 1 after Compact, got %d", hm.Len())
+		t.Fatalf("Element count should be 1 after reinsertion, got %d", hm.Len())
 	}
 
-	// Extend triggers Compact branch
 	hm.Remove(3)
 	hm.Extend(iter.Seq2[int, int](func(yield func(int, int) bool) {
 		for i := 4; i <= 5; i++ {

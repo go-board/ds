@@ -2,9 +2,12 @@ package skipmap
 
 import (
 	"fmt"
-	"github.com/go-board/ds/bound"
 	"math/rand"
+	"reflect"
 	"testing"
+
+	"github.com/go-board/ds/bound"
+	"github.com/go-board/ds/internal/kv"
 )
 
 // Test basic insertion and retrieval functionality
@@ -54,6 +57,22 @@ func TestSkipMapBasicOperations(t *testing.T) {
 	oldValue, found = sm.Remove("orange")
 	if found || oldValue != 0 {
 		t.Errorf("Remove(\"orange\") should return 0, false, got %d, %v", oldValue, found)
+	}
+}
+
+func TestSkipMapNodeStoresPairInline(t *testing.T) {
+	sm := NewOrdered[string, int]()
+	sm.Insert("apple", 5)
+
+	n := sm.head.next[0]
+	if n == nil {
+		t.Fatal("Insert should create a first node")
+	}
+
+	got := reflect.TypeOf(n.Pair)
+	want := reflect.TypeOf(kv.Pair[string, int]{})
+	if got != want {
+		t.Fatalf("skip map node should store pair inline, got %v want %v", got, want)
 	}
 }
 

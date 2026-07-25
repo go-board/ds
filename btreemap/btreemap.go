@@ -4,13 +4,14 @@ import (
 	"cmp"
 
 	"github.com/go-board/ds/btree"
+	"github.com/go-board/ds/internal/kv"
 )
 
 // BTreeMap implements an ordered map based on B-trees. It provides key-sorted iteration and efficient range queries.
 // Key ordering is achieved through a custom comparison function provided at construction time.
 // Implemented using generics to support any key and value types.
 type BTreeMap[K, V any] struct {
-	btree      *btree.BTree[*node[K, V]]
+	btree      *btree.BTree[*kv.Pair[K, V]]
 	comparator func(K, K) int
 }
 
@@ -28,7 +29,7 @@ func New[K, V any](comparator func(K, K) int) *BTreeMap[K, V] {
 	}
 
 	// create a comparator function for node entries
-	entryComparator := func(a, b *node[K, V]) int {
+	entryComparator := func(a, b *kv.Pair[K, V]) int {
 		return comparator(a.Key, b.Key)
 	}
 
@@ -89,7 +90,7 @@ func (m *BTreeMap[K, V]) Insert(key K, value V) (V, bool) {
 }
 
 func (m *BTreeMap[K, V]) insert(key K, value V) (V, bool) {
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	existingEntry, found := m.btree.Search(targetEntry)
 	if found {
 		oldValue := existingEntry.Value
@@ -98,7 +99,7 @@ func (m *BTreeMap[K, V]) insert(key K, value V) (V, bool) {
 	}
 
 	var zero V
-	m.btree.Insert(&node[K, V]{Key: key, Value: value})
+	m.btree.Insert(&kv.Pair[K, V]{Key: key, Value: value})
 	return zero, false
 }
 
@@ -113,7 +114,7 @@ func (m *BTreeMap[K, V]) insert(key K, value V) (V, bool) {
 // Time Complexity: O(log n)
 func (m *BTreeMap[K, V]) Get(key K) (V, bool) {
 	var zero V
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	existingEntry, found := m.btree.Search(targetEntry)
 	if !found {
 		return zero, false
@@ -132,7 +133,7 @@ func (m *BTreeMap[K, V]) Get(key K) (V, bool) {
 // Time Complexity: O(log n)
 // Note: The returned pointer is valid only while the map is not modified by other operations.
 func (m *BTreeMap[K, V]) GetMut(key K) (*V, bool) {
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	existingEntry, found := m.btree.Search(targetEntry)
 	if !found {
 		return nil, false
@@ -151,7 +152,7 @@ func (m *BTreeMap[K, V]) GetMut(key K) (*V, bool) {
 //
 // Time Complexity: O(log n)
 func (m *BTreeMap[K, V]) GetKeyValue(key K) (k K, v V, found bool) {
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	existingEntry, found := m.btree.Search(targetEntry)
 	if !found {
 		return
@@ -169,7 +170,7 @@ func (m *BTreeMap[K, V]) GetKeyValue(key K) (k K, v V, found bool) {
 //
 // Time Complexity: O(log n)
 func (m *BTreeMap[K, V]) Remove(key K) (v V, found bool) {
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	// search for the entry to delete to obtain its current value
 	existingEntry, found := m.btree.Search(targetEntry)
 	if !found {
@@ -194,7 +195,7 @@ func (m *BTreeMap[K, V]) Remove(key K) (v V, found bool) {
 //
 // Time Complexity: O(log n)
 func (m *BTreeMap[K, V]) ContainsKey(key K) bool {
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	_, found := m.btree.Search(targetEntry)
 	return found
 }
@@ -210,7 +211,7 @@ func (m *BTreeMap[K, V]) Entry(key K) Entry[K, V] {
 	entry := Entry[K, V]{mapRef: m, key: key}
 
 	// search for the key and attach node if present
-	targetEntry := &node[K, V]{Key: key}
+	targetEntry := &kv.Pair[K, V]{Key: key}
 	existingEntry, found := m.btree.Search(targetEntry)
 	if found {
 		entry.node = existingEntry
@@ -240,7 +241,7 @@ func (m *BTreeMap[K, V]) IsEmpty() bool {
 // Clear removes all key-value pairs from the map, making it empty.
 // Time Complexity: O(1)
 func (m *BTreeMap[K, V]) Clear() {
-	m.btree = btree.New(func(a, b *node[K, V]) int {
+	m.btree = btree.New(func(a, b *kv.Pair[K, V]) int {
 		return m.comparator(a.Key, b.Key)
 	})
 }

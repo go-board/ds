@@ -4,25 +4,25 @@ import (
 	"hash/maphash"
 
 	"github.com/go-board/ds/hashutil"
+	"github.com/go-board/ds/internal/kv"
 )
 
 // HashMap is an efficient generic hash map implementation supporting arbitrary key and value types.
 // It achieves fast query, insertion, and deletion operations through hashing algorithms with average O(1) time complexity.
 // Uses type parameter H (implementing Hasher[K] interface) for key hashing and equality comparison,
 // supporting custom hashing strategies for improved flexibility and customizability.
-// Internally uses a map for bucket storage and provides a soft deletion mechanism to optimize performance.
+// Internally uses a map for bucket storage and bucket slices to handle hash collisions.
 type HashMap[K, V any, H hashutil.Hasher[K]] struct {
-	buckets      map[uint64]*bucket[K, V] // Bucket mapping table (using hash values as keys) - 8 bytes
-	hasher       H                        // Specific implementation instance for hash computation and equality comparison - at least 8 bytes
-	seed         maphash.Seed             // Hash seed - 16 bytes
-	size         int                      // Number of valid elements - 8 bytes
-	deletedCount int                      // Number of deleted elements - 8 bytes
+	buckets map[uint64]*bucket[K, V] // Bucket mapping table (using hash values as keys) - 8 bytes
+	hasher  H                        // Specific implementation instance for hash computation and equality comparison - at least 8 bytes
+	seed    maphash.Seed             // Hash seed - 16 bytes
+	size    int                      // Number of elements - 8 bytes
 }
 
 // bucket represents a bucket in the hash map, storing key-value pairs with hash collisions.
 // Each bucket internally maintains an array of nodes for storing key-value pair data.
 type bucket[K, V any] struct {
-	nodes []*node[K, V] // Array of nodes in the bucket
+	nodes []kv.Pair[K, V] // Array of nodes in the bucket
 }
 
 // New creates a new empty HashMap instance.
@@ -116,7 +116,7 @@ func (hm *HashMap[K, V, H]) getBucket(hash uint64) *bucket[K, V] {
 	b, exists := hm.buckets[hash]
 	if !exists {
 		// Create new bucket
-		b = &bucket[K, V]{nodes: make([]*node[K, V], 0)}
+		b = &bucket[K, V]{nodes: make([]kv.Pair[K, V], 0)}
 		hm.buckets[hash] = b
 	}
 	return b
@@ -127,8 +127,8 @@ func (hm *HashMap[K, V, H]) getBucket(hash uint64) *bucket[K, V] {
 //   - key: The key to look up
 //
 // Returns:
-//   - If the key exists and is not deleted, returns the associated value and true
-//   - If the key does not exist or has been deleted, returns the zero value and false
+//   - If the key exists, returns the associated value and true
+//   - If the key does not exist, returns the zero value and false
 //
 // Average Time Complexity: O(1)
 func (hm *HashMap[K, V, H]) Get(key K) (v V, found bool) {
@@ -139,10 +139,11 @@ func (hm *HashMap[K, V, H]) Get(key K) (v V, found bool) {
 		return
 	}
 
-	// Iterate through nodes in the bucket to find the matching key (skipping deleted nodes)
-	for _, node := range bucket.nodes {
-		if !node.deleted && hm.hasher.Equal(node.key, key) {
-			return node.value, true
+	// Iterate through nodes in the bucket to find the matching key.
+	for i := range bucket.nodes {
+		node := &bucket.nodes[i]
+		if hm.hasher.Equal(node.Key, key) {
+			return node.Value, true
 		}
 	}
 
@@ -155,8 +156,8 @@ func (hm *HashMap[K, V, H]) Get(key K) (v V, found bool) {
 //   - key: The key to look up
 //
 // Returns:
-//   - If the key exists and is not deleted, returns a pointer to the value and true
-//   - If the key does not exist or has been deleted, returns nil and false
+//   - If the key exists, returns a pointer to the value and true
+//   - If the key does not exist, returns nil and false
 //
 // Average Time Complexity: O(1)
 // Note: The returned pointer is only valid as long as the hash map is not modified by other operations.
@@ -168,11 +169,12 @@ func (hm *HashMap[K, V, H]) GetMut(key K) (*V, bool) {
 		return nil, false
 	}
 
-	// Iterate through nodes in the bucket to find the matching key (skip deleted nodes)
-	for _, node := range bucket.nodes {
-		if !node.deleted && hm.hasher.Equal(node.key, key) {
+	// Iterate through nodes in the bucket to find the matching key.
+	for i := range bucket.nodes {
+		node := &bucket.nodes[i]
+		if hm.hasher.Equal(node.Key, key) {
 			// Return a pointer to the value, allowing direct modification
-			return &node.value, true
+			return &node.Value, true
 		}
 	}
 
@@ -185,8 +187,8 @@ func (hm *HashMap[K, V, H]) GetMut(key K) (*V, bool) {
 //   - key: The key to look up
 //
 // Returns:
-//   - If the key exists and is not deleted, returns the key, associated value, and true
-//   - If the key does not exist or has been deleted, returns the input key, zero value, and false
+//   - If the key exists, returns the key, associated value, and true
+//   - If the key does not exist, returns the input key, zero value, and false
 //
 // Average Time Complexity: O(1)
 func (hm *HashMap[K, V, H]) GetKeyValue(key K) (K, V, bool) {
@@ -197,10 +199,11 @@ func (hm *HashMap[K, V, H]) GetKeyValue(key K) (K, V, bool) {
 		return key, zeroV, false
 	}
 
-	// Iterate through nodes in the bucket to find the matching key (skip deleted nodes)
-	for _, node := range bucket.nodes {
-		if !node.deleted && hm.hasher.Equal(node.key, key) {
-			return node.key, node.value, true
+	// Iterate through nodes in the bucket to find the matching key.
+	for i := range bucket.nodes {
+		node := &bucket.nodes[i]
+		if hm.hasher.Equal(node.Key, key) {
+			return node.Key, node.Value, true
 		}
 	}
 
@@ -213,7 +216,7 @@ func (hm *HashMap[K, V, H]) GetKeyValue(key K) (K, V, bool) {
 //   - key: The key to check
 //
 // Return value:
-//   - true if the key exists and is not deleted, otherwise false
+//   - true if the key exists, otherwise false
 //
 // Average time complexity: O(1)
 func (hm *HashMap[K, V, H]) ContainsKey(key K) bool {
@@ -223,9 +226,10 @@ func (hm *HashMap[K, V, H]) ContainsKey(key K) bool {
 		return false
 	}
 
-	// Iterate through nodes in the bucket to find a matching undeleted key
-	for _, node := range bucket.nodes {
-		if !node.deleted && hm.hasher.Equal(node.key, key) {
+	// Iterate through nodes in the bucket to find a matching key.
+	for i := range bucket.nodes {
+		node := &bucket.nodes[i]
+		if hm.hasher.Equal(node.Key, key) {
 			return true
 		}
 	}
@@ -243,26 +247,19 @@ func (hm *HashMap[K, V, H]) ContainsKey(key K) bool {
 //   - Zero value and false if the key does not exist
 //
 // Average time complexity: O(1)
-// Note: When there are many deleted nodes in the hash map, compression is automatically triggered.
 func (hm *HashMap[K, V, H]) Insert(key K, value V) (V, bool) {
-	// Automatically trigger compression when there are many deleted nodes.
-	if hm.deletedCount > hm.size {
-		hm.Compact()
-	}
 	return hm.Entry(key).Insert(value)
 }
 
-// Remove softly deletes the key-value pair with the specified key.
+// Remove deletes the key-value pair with the specified key.
 // Parameters:
 //   - key: The key to delete
 //
 // Return values:
-//   - The deleted value and true if the key exists and is not deleted
-//   - Zero value and false if the key does not exist or is already deleted
+//   - The deleted value and true if the key exists
+//   - Zero value and false if the key does not exist
 //
 // Average time complexity: O(1)
-// Note: Soft deletion does not immediately free memory but marks the node as deleted.
-// Memory can be freed by calling the Compact method.
 func (hm *HashMap[K, V, H]) Remove(key K) (V, bool) {
 	hash := hm.hash(key)
 	bucket, exists := hm.buckets[hash]
@@ -271,14 +268,18 @@ func (hm *HashMap[K, V, H]) Remove(key K) (V, bool) {
 		return zeroV, false
 	}
 
-	// Find and mark the node as deleted
-	for _, node := range bucket.nodes {
-		if !node.deleted && hm.hasher.Equal(node.key, key) {
-			// Soft deletion: mark the node as deleted
-			node.deleted = true
-			oldValue := node.value
+	for i := range bucket.nodes {
+		node := &bucket.nodes[i]
+		if hm.hasher.Equal(node.Key, key) {
+			oldValue := node.Value
+			copy(bucket.nodes[i:], bucket.nodes[i+1:])
+			var zero kv.Pair[K, V]
+			bucket.nodes[len(bucket.nodes)-1] = zero
+			bucket.nodes = bucket.nodes[:len(bucket.nodes)-1]
+			if len(bucket.nodes) == 0 {
+				delete(hm.buckets, hash)
+			}
 			hm.size--
-			hm.deletedCount++
 			return oldValue, true
 		}
 	}
@@ -290,7 +291,7 @@ func (hm *HashMap[K, V, H]) Remove(key K) (V, bool) {
 
 // Len returns the number of valid elements in the hash map.
 // Return value:
-//   - The current number of undeleted key-value pairs in the hash map
+//   - The current number of key-value pairs in the hash map
 //
 // Time complexity: O(1)
 func (hm *HashMap[K, V, H]) Len() int {
@@ -312,7 +313,6 @@ func (hm *HashMap[K, V, H]) IsEmpty() bool {
 func (hm *HashMap[K, V, H]) Clear() {
 	hm.buckets = make(map[uint64]*bucket[K, V])
 	hm.size = 0
-	hm.deletedCount = 0
 }
 
 // Clone creates a deep copy of the hash map.
@@ -324,73 +324,27 @@ func (hm *HashMap[K, V, H]) Clear() {
 func (hm *HashMap[K, V, H]) Clone() *HashMap[K, V, H] {
 	// Create new HashMap instance
 	clone := &HashMap[K, V, H]{
-		buckets:      make(map[uint64]*bucket[K, V], len(hm.buckets)),
-		hasher:       hm.hasher, // Copy hasher instance
-		seed:         hm.seed,
-		size:         hm.size,
-		deletedCount: hm.deletedCount,
+		buckets: make(map[uint64]*bucket[K, V], len(hm.buckets)),
+		hasher:  hm.hasher, // Copy hasher instance
+		seed:    hm.seed,
+		size:    hm.size,
 	}
 
 	// Copy all buckets and nodes
 	for hash, b := range hm.buckets {
 		// Create new bucket
 		newBucket := &bucket[K, V]{
-			nodes: make([]*node[K, V], len(b.nodes)),
+			nodes: make([]kv.Pair[K, V], len(b.nodes)),
 		}
 
 		// Copy all nodes
-		for idx, n := range b.nodes {
-			// Create new node and copy content
-			newNode := &node[K, V]{
-				key:     n.key,
-				value:   n.value,
-				deleted: n.deleted,
-			}
-			newBucket.nodes[idx] = newNode
-		}
+		copy(newBucket.nodes, b.nodes)
 
 		clone.buckets[hash] = newBucket
 	}
 
 	return clone
 }
-
-// Compact compresses the hash map, removing all deleted nodes.
-// This operation cleans up soft-deleted nodes, frees memory, and improves traversal and lookup efficiency.
-// Time complexity: O(n), where n is the number of elements
-func (hm *HashMap[K, V, H]) Compact() {
-	// Iterate through all buckets
-	for hash, bucket := range hm.buckets {
-		// Filter out deleted nodes
-		activeNodes := make([]*node[K, V], 0, len(bucket.nodes))
-		for _, node := range bucket.nodes {
-			if !node.deleted {
-				activeNodes = append(activeNodes, node)
-			}
-		}
-
-		if len(activeNodes) > 0 {
-			// Update node list in bucket
-			bucket.nodes = activeNodes
-		} else {
-			// If bucket is empty, remove it from the map
-			delete(hm.buckets, hash)
-		}
-	}
-
-	// Reset deleted count
-	hm.deletedCount = 0
-}
-
-// Extend adds another iterable key-value pair collection to the current hash map.
-// Parameters:
-//   - iter: Iterator providing key-value pairs
-//
-// Behavior:
-//   - For each key-value pair, if the key exists, update its value; otherwise add a new key-value pair
-//
-// Average time complexity: O(n), where n is the number of elements in the iterator
-// Note: Before operation, it checks if compression is needed to optimize performance.
 
 // Entry gets the Entry state for a key, used for flexible handling of insertion/update operations.
 // Provides a Rust-like Entry API, supporting more complex conditional operations.
@@ -402,18 +356,21 @@ func (hm *HashMap[K, V, H]) Compact() {
 func (hm *HashMap[K, V, H]) Entry(key K) Entry[K, V, H] {
 	hash := hm.hash(key)
 	entry := Entry[K, V, H]{
-		hashMap: hm,
-		hash:    hash,
-		key:     key,
-		node:    nil,
+		hashMap:  hm,
+		hash:     hash,
+		key:      key,
+		index:    -1,
+		occupied: false,
 	}
 
 	// Find if key exists
 	bucket, exists := hm.buckets[hash]
 	if exists {
-		for _, node := range bucket.nodes {
-			if !node.deleted && hm.hasher.Equal(node.key, key) {
-				entry.node = node
+		for i := range bucket.nodes {
+			node := &bucket.nodes[i]
+			if hm.hasher.Equal(node.Key, key) {
+				entry.index = i
+				entry.occupied = true
 				break
 			}
 		}

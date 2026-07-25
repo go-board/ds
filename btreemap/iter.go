@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-board/ds/bound"
 	diter "github.com/go-board/ds/internal/iter"
+	"github.com/go-board/ds/internal/kv"
 )
 
 // IterAsc returns an iterator over all key/value pairs in ascending key order.
@@ -14,7 +15,7 @@ import (
 //
 // Time Complexity: O(n)
 func (m *BTreeMap[K, V]) IterAsc() iter.Seq2[K, V] {
-	return diter.Split(m.btree.IterAsc(), (*node[K, V]).kv)
+	return diter.Split(m.btree.IterAsc(), (*kv.Pair[K, V]).KV)
 }
 
 // IterMutAsc returns a mutable iterator over all key/value pairs in ascending key order.
@@ -25,7 +26,7 @@ func (m *BTreeMap[K, V]) IterAsc() iter.Seq2[K, V] {
 //
 // Time Complexity: O(n)
 func (m *BTreeMap[K, V]) IterMutAsc() iter.Seq2[K, *V] {
-	return diter.Split(m.btree.IterAsc(), (*node[K, V]).kvMut)
+	return diter.Split(m.btree.IterAsc(), (*kv.Pair[K, V]).KVMut)
 }
 
 // IterDesc returns an iterator over all key/value pairs in descending key order.
@@ -35,7 +36,7 @@ func (m *BTreeMap[K, V]) IterMutAsc() iter.Seq2[K, *V] {
 //
 // Time Complexity: O(n)
 func (m *BTreeMap[K, V]) IterDesc() iter.Seq2[K, V] {
-	return diter.Split(m.btree.IterDesc(), (*node[K, V]).kv)
+	return diter.Split(m.btree.IterDesc(), (*kv.Pair[K, V]).KV)
 }
 
 // IterMutDesc returns a mutable iterator over all key/value pairs in descending key order.
@@ -46,7 +47,7 @@ func (m *BTreeMap[K, V]) IterDesc() iter.Seq2[K, V] {
 //
 // Time Complexity: O(n)
 func (m *BTreeMap[K, V]) IterMutDesc() iter.Seq2[K, *V] {
-	return diter.Split(m.btree.IterDesc(), (*node[K, V]).kvMut)
+	return diter.Split(m.btree.IterDesc(), (*kv.Pair[K, V]).KVMut)
 }
 
 // RangeAsc returns an iterator over key/value pairs within the given bounds in ascending key order.
@@ -59,7 +60,7 @@ func (m *BTreeMap[K, V]) IterMutDesc() iter.Seq2[K, *V] {
 //
 // Time Complexity: O(log n + k) where k is the number of elements in the range.
 func (m *BTreeMap[K, V]) RangeAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
-	return diter.Split(m.rangeNode(bounds, false), (*node[K, V]).kv)
+	return diter.Split(m.rangeNode(bounds, false), (*kv.Pair[K, V]).KV)
 }
 
 // RangeMutAsc returns a mutable iterator over key/value pairs within the given bounds in ascending key order.
@@ -73,7 +74,7 @@ func (m *BTreeMap[K, V]) RangeAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
 //
 // Time Complexity: O(log n + k) where k is the number of elements in the range.
 func (m *BTreeMap[K, V]) RangeMutAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V] {
-	return diter.Split(m.rangeNode(bounds, false), (*node[K, V]).kvMut)
+	return diter.Split(m.rangeNode(bounds, false), (*kv.Pair[K, V]).KVMut)
 }
 
 // RangeDesc returns an iterator over key/value pairs within the given bounds in descending key order.
@@ -86,7 +87,7 @@ func (m *BTreeMap[K, V]) RangeMutAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, *
 //
 // Time Complexity: O(log n + k) where k is the number of elements in the range.
 func (m *BTreeMap[K, V]) RangeDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
-	return diter.Split(m.rangeNode(bounds, true), (*node[K, V]).kv)
+	return diter.Split(m.rangeNode(bounds, true), (*kv.Pair[K, V]).KV)
 }
 
 // RangeMutDesc returns a mutable iterator over key/value pairs within the given bounds in descending key order.
@@ -100,10 +101,10 @@ func (m *BTreeMap[K, V]) RangeDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] 
 //
 // Time Complexity: O(log n + k) where k is the number of elements in the range.
 func (m *BTreeMap[K, V]) RangeMutDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V] {
-	return diter.Split(m.rangeNode(bounds, true), (*node[K, V]).kvMut)
+	return diter.Split(m.rangeNode(bounds, true), (*kv.Pair[K, V]).KVMut)
 }
 
-func (m *BTreeMap[K, V]) rangeNode(bounds bound.RangeBounds[K], desc bool) iter.Seq[*node[K, V]] {
+func (m *BTreeMap[K, V]) rangeNode(bounds bound.RangeBounds[K], desc bool) iter.Seq[*kv.Pair[K, V]] {
 	nb := mapBounds[K, V](bounds)
 	if desc {
 		return m.btree.RangeDesc(nb)
@@ -111,17 +112,17 @@ func (m *BTreeMap[K, V]) rangeNode(bounds bound.RangeBounds[K], desc bool) iter.
 	return m.btree.RangeAsc(nb)
 }
 
-func mapBounds[K, V any](b bound.RangeBounds[K]) bound.RangeBounds[*node[K, V]] {
-	mapOne := func(src bound.Bound[K]) bound.Bound[*node[K, V]] {
+func mapBounds[K, V any](b bound.RangeBounds[K]) bound.RangeBounds[*kv.Pair[K, V]] {
+	mapOne := func(src bound.Bound[K]) bound.Bound[*kv.Pair[K, V]] {
 		switch src.Kind() {
 		case bound.Unbounded:
-			return bound.NewUnbounded[*node[K, V]]()
+			return bound.NewUnbounded[*kv.Pair[K, V]]()
 		case bound.Included:
 			v, _ := src.Value()
-			return bound.NewIncluded(&node[K, V]{Key: v})
+			return bound.NewIncluded(&kv.Pair[K, V]{Key: v})
 		default:
 			v, _ := src.Value()
-			return bound.NewExcluded(&node[K, V]{Key: v})
+			return bound.NewExcluded(&kv.Pair[K, V]{Key: v})
 		}
 	}
 	return bound.NewRangeBounds(mapOne(b.Start), mapOne(b.End))

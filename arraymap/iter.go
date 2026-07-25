@@ -5,10 +5,11 @@ import (
 
 	"github.com/go-board/ds/bound"
 	diter "github.com/go-board/ds/internal/iter"
+	"github.com/go-board/ds/internal/kv"
 )
 
-func (m *ArrayMap[K, V]) iterPairAsc() iter.Seq[*pair[K, V]] {
-	return func(yield func(*pair[K, V]) bool) {
+func (m *ArrayMap[K, V]) iterPairAsc() iter.Seq[*kv.Pair[K, V]] {
+	return func(yield func(*kv.Pair[K, V]) bool) {
 		for i := range m.items {
 			if !yield(&m.items[i]) {
 				return
@@ -17,8 +18,8 @@ func (m *ArrayMap[K, V]) iterPairAsc() iter.Seq[*pair[K, V]] {
 	}
 }
 
-func (m *ArrayMap[K, V]) iterPairDesc() iter.Seq[*pair[K, V]] {
-	return func(yield func(*pair[K, V]) bool) {
+func (m *ArrayMap[K, V]) iterPairDesc() iter.Seq[*kv.Pair[K, V]] {
+	return func(yield func(*kv.Pair[K, V]) bool) {
 		for i := len(m.items) - 1; i >= 0; i-- {
 			if !yield(&m.items[i]) {
 				return
@@ -27,9 +28,9 @@ func (m *ArrayMap[K, V]) iterPairDesc() iter.Seq[*pair[K, V]] {
 	}
 }
 
-func (m *ArrayMap[K, V]) rangePairAsc(bounds bound.RangeBounds[K]) iter.Seq[*pair[K, V]] {
+func (m *ArrayMap[K, V]) rangePairAsc(bounds bound.RangeBounds[K]) iter.Seq[*kv.Pair[K, V]] {
 	start, end := m.rangeIndices(bounds)
-	return func(yield func(*pair[K, V]) bool) {
+	return func(yield func(*kv.Pair[K, V]) bool) {
 		for i := start; i < end; i++ {
 			if !yield(&m.items[i]) {
 				return
@@ -38,9 +39,9 @@ func (m *ArrayMap[K, V]) rangePairAsc(bounds bound.RangeBounds[K]) iter.Seq[*pai
 	}
 }
 
-func (m *ArrayMap[K, V]) rangePairDesc(bounds bound.RangeBounds[K]) iter.Seq[*pair[K, V]] {
+func (m *ArrayMap[K, V]) rangePairDesc(bounds bound.RangeBounds[K]) iter.Seq[*kv.Pair[K, V]] {
 	start, end := m.rangeIndices(bounds)
-	return func(yield func(*pair[K, V]) bool) {
+	return func(yield func(*kv.Pair[K, V]) bool) {
 		for i := end - 1; i >= start; i-- {
 			if !yield(&m.items[i]) {
 				return
@@ -92,42 +93,42 @@ func (m *ArrayMap[K, V]) rangeIndices(bounds bound.RangeBounds[K]) (start, end i
 
 // IterAsc returns an iterator over all key-value pairs in ascending key order.
 func (m *ArrayMap[K, V]) IterAsc() iter.Seq2[K, V] {
-	return diter.Split(m.iterPairAsc(), (*pair[K, V]).kv)
+	return diter.Split(m.iterPairAsc(), (*kv.Pair[K, V]).KV)
 }
 
 // IterMutAsc returns a mutable iterator over all key-value pairs in ascending key order.
 func (m *ArrayMap[K, V]) IterMutAsc() iter.Seq2[K, *V] {
-	return diter.Split(m.iterPairAsc(), (*pair[K, V]).kvMut)
+	return diter.Split(m.iterPairAsc(), (*kv.Pair[K, V]).KVMut)
 }
 
 // IterDesc returns an iterator over all key-value pairs in descending key order.
 func (m *ArrayMap[K, V]) IterDesc() iter.Seq2[K, V] {
-	return diter.Split(m.iterPairDesc(), (*pair[K, V]).kv)
+	return diter.Split(m.iterPairDesc(), (*kv.Pair[K, V]).KV)
 }
 
 // IterMutDesc returns a mutable iterator over all key-value pairs in descending key order.
 func (m *ArrayMap[K, V]) IterMutDesc() iter.Seq2[K, *V] {
-	return diter.Split(m.iterPairDesc(), (*pair[K, V]).kvMut)
+	return diter.Split(m.iterPairDesc(), (*kv.Pair[K, V]).KVMut)
 }
 
 // RangeAsc returns key-value pairs in ascending key order within bounds.
 func (m *ArrayMap[K, V]) RangeAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
-	return diter.Split(m.rangePairAsc(bounds), (*pair[K, V]).kv)
+	return diter.Split(m.rangePairAsc(bounds), (*kv.Pair[K, V]).KV)
 }
 
 // RangeMutAsc returns mutable key-value pairs in ascending key order within bounds.
 func (m *ArrayMap[K, V]) RangeMutAsc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V] {
-	return diter.Split(m.rangePairAsc(bounds), (*pair[K, V]).kvMut)
+	return diter.Split(m.rangePairAsc(bounds), (*kv.Pair[K, V]).KVMut)
 }
 
 // RangeDesc returns key-value pairs in descending key order within bounds.
 func (m *ArrayMap[K, V]) RangeDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, V] {
-	return diter.Split(m.rangePairDesc(bounds), (*pair[K, V]).kv)
+	return diter.Split(m.rangePairDesc(bounds), (*kv.Pair[K, V]).KV)
 }
 
 // RangeMutDesc returns mutable key-value pairs in descending key order within bounds.
 func (m *ArrayMap[K, V]) RangeMutDesc(bounds bound.RangeBounds[K]) iter.Seq2[K, *V] {
-	return diter.Split(m.rangePairDesc(bounds), (*pair[K, V]).kvMut)
+	return diter.Split(m.rangePairDesc(bounds), (*kv.Pair[K, V]).KVMut)
 }
 
 // KeysAsc returns an iterator over all keys in ascending order.

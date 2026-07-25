@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-board/ds/bound"
+	"github.com/go-board/ds/internal/kv"
 )
 
 // TestBTreeMapBasic validates insert, lookup, update, and delete behavior.
@@ -96,27 +97,22 @@ func TestBTreeMapClear(t *testing.T) {
 
 // TestBTreeMapEntryAndEntries checks entry materialization and ordering.
 func TestBTreeMapEntryAndEntries(t *testing.T) {
-	entry := node[int, string]{Key: 42, Value: "answer"}
-	if entry.GetKey() != 42 || entry.GetValue() != "answer" {
-		t.Errorf("node creation failed, expected (42, 'answer'), got (%v, %v)", entry.GetKey(), entry.GetValue())
-	}
-
 	m := NewOrdered[int, string]()
 
 	m.Insert(3, "three")
 	m.Insert(1, "one")
 	m.Insert(2, "two")
 
-	var collectedEntries []node[int, string]
+	var collectedEntries []kv.Pair[int, string]
 	for k, v := range m.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewUnbounded[int]())) {
-		collectedEntries = append(collectedEntries, node[int, string]{Key: k, Value: v})
+		collectedEntries = append(collectedEntries, kv.Pair[int, string]{Key: k, Value: v})
 	}
 
 	if len(collectedEntries) != 3 {
 		t.Errorf("Expected 3 entries, got %d", len(collectedEntries))
 	}
 
-	expectedEntries := []node[int, string]{
+	expectedEntries := []kv.Pair[int, string]{
 		{Key: 1, Value: "one"},
 		{Key: 2, Value: "two"},
 		{Key: 3, Value: "three"},
@@ -129,9 +125,6 @@ func TestBTreeMapEntryAndEntries(t *testing.T) {
 				expected.Key, expected.Value, i, e.Key, e.Value)
 		}
 
-		if e.GetKey() != e.Key || e.GetValue() != e.Value {
-			t.Errorf("Entry Getter methods failed for entry (%v, %v)", e.Key, e.Value)
-		}
 	}
 
 	emptyMap := NewOrdered[int, string]()
@@ -154,9 +147,9 @@ func TestBTreeMapRangeEntries(t *testing.T) {
 
 	lowerBound := 3
 	upperBound := 7
-	var rangeEntries []node[int, string]
+	var rangeEntries []kv.Pair[int, string]
 	for k, v := range m.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerBound), bound.NewExcluded(upperBound))) {
-		rangeEntries = append(rangeEntries, node[int, string]{Key: k, Value: v})
+		rangeEntries = append(rangeEntries, kv.Pair[int, string]{Key: k, Value: v})
 	}
 
 	expectedKeys := []int{3, 4, 5, 6}
@@ -174,9 +167,9 @@ func TestBTreeMapRangeEntries(t *testing.T) {
 	}
 
 	lowerOnly := 8
-	var lowerRangeEntries []node[int, string]
+	var lowerRangeEntries []kv.Pair[int, string]
 	for k, v := range m.RangeAsc(bound.NewRangeBounds(bound.NewIncluded(lowerOnly), bound.NewUnbounded[int]())) {
-		lowerRangeEntries = append(lowerRangeEntries, node[int, string]{Key: k, Value: v})
+		lowerRangeEntries = append(lowerRangeEntries, kv.Pair[int, string]{Key: k, Value: v})
 	}
 
 	expectedLowerKeys := []int{8, 9, 10}
@@ -185,9 +178,9 @@ func TestBTreeMapRangeEntries(t *testing.T) {
 	}
 
 	upperOnly := 2
-	var upperRangeEntries []node[int, string]
+	var upperRangeEntries []kv.Pair[int, string]
 	for k, v := range m.RangeAsc(bound.NewRangeBounds(bound.NewUnbounded[int](), bound.NewExcluded(upperOnly))) {
-		upperRangeEntries = append(upperRangeEntries, node[int, string]{Key: k, Value: v})
+		upperRangeEntries = append(upperRangeEntries, kv.Pair[int, string]{Key: k, Value: v})
 	}
 
 	expectedUpperKeys := []int{1}

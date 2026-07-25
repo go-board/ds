@@ -150,15 +150,6 @@ func (hs *HashSet[E, H]) Clone() *HashSet[E, H] {
 	}
 }
 
-// Compact compacts the set, removing all deleted nodes.
-//
-// This operation frees memory and improves iteration and lookup efficiency, especially after numerous deletion operations.
-//
-// Time complexity: O(n), where n is the number of buckets in the set
-func (hs *HashSet[E, H]) Compact() {
-	hs.table.Compact()
-}
-
 // Entry retrieves the Entry state for an element, for flexible handling of insertion operations.
 //
 // Parameters:

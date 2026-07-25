@@ -2,8 +2,6 @@ package hashutil
 
 import (
 	"hash/maphash"
-	"maps"
-	"slices"
 )
 
 // Hasher defines a generic interface for comparing and hashing values of any type
@@ -24,11 +22,7 @@ type Hasher[E any] interface {
 	Hash(h *maphash.Hash, v E)
 }
 
-// DefaultHasher is a default hasher implementation for comparable types
-// It uses Go's standard maphash package for hash computation
-type Default[E comparable] struct {
-	_ [0]func(*E)
-}
+type ComparableHasher[T comparable] struct{ _ [0]func(*T) }
 
 // Equal compares two comparable values for equality
 //
@@ -39,9 +33,7 @@ type Default[E comparable] struct {
 //   - true if x and y are equal, false otherwise
 //
 // Time Complexity: O(1)
-func (Default[E]) Equal(x, y E) bool {
-	return x == y
-}
+func (ComparableHasher[T]) Equal(x, y T) bool { return x == y }
 
 // Hash computes hash for comparable values using maphash.Hash
 //
@@ -50,9 +42,11 @@ func (Default[E]) Equal(x, y E) bool {
 //   - v: The value to hash
 //
 // Time Complexity: O(1)
-func (Default[E]) Hash(h *maphash.Hash, v E) {
-	maphash.WriteComparable(h, v)
-}
+func (ComparableHasher[T]) Hash(h *maphash.Hash, v T) { maphash.WriteComparable(h, v) }
+
+// Default is a default hasher implementation for comparable types
+// It uses Go's standard maphash package for hash computation
+type Default[E comparable] = ComparableHasher[E]
 
 // SliceHasher is a hasher implementation for slice types
 // It uses the element type's Hasher to compute the hash for the entire slice
@@ -83,7 +77,15 @@ func NewSliceHasher[E ~[]T, T any, H Hasher[T]](hasher H) SliceHasher[E, T, H] {
 //
 // Time Complexity: O(n), where n is the length of the slices
 func (sh SliceHasher[E, T, H]) Equal(x, y E) bool {
-	return slices.EqualFunc(x, y, sh.hasher.Equal)
+	if len(x) != len(y) {
+		return false
+	}
+	for i := range x {
+		if !sh.hasher.Equal(x[i], y[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // Hash computes hash for a slice using maphash.Hash
@@ -128,7 +130,15 @@ func NewMapHasher[E ~map[K]V, K comparable, V any, H Hasher[V]](hasher H) MapHas
 //
 // Time Complexity: O(n), where n is the number of keys in the maps
 func (mh MapHasher[E, K, V, H]) Equal(x, y E) bool {
-	return maps.EqualFunc(x, y, mh.hasher.Equal)
+	if len(x) != len(y) {
+		return false
+	}
+	for k := range x {
+		if !mh.hasher.Equal(x[k], y[k]) {
+			return false
+		}
+	}
+	return true
 }
 
 // Hash computes hash for a map using maphash.Hash
